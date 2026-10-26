@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="Halibut, unidentified version">
+<title>JoliPuTTY User Manual</title>
+<link rel="index" href="IndexPage.html">
+<link rel="next" href="intro.html">
+<meta name="viewport" content="width=device-width, initial-scale=1"> <link rel="stylesheet" type="text/css" href="joliputty.css"></head>
+<body>
+<p>Previous | Contents | <a href="IndexPage.html">Index</a> | <a href="intro.html">Next</a></p>
+<h1>JoliPuTTY User Manual</h1>
+<!-- The logo of the Welcome tab, in the Atari ST's colours, as
+     make_help.sh puts it at the top of the manual's first page -->
+<div class="welcome">
+<pre class="logo" aria-label="JoliPuTTY"><span style="color: #ff0000">      _       _ _   ____        _____ _______   __</span>
+<span style="color: #ff9200">     | | ___ | (_) |  _ \ _   _|_   _|_   _\ \ / /</span>
+<span style="color: #ffff00">  _  | |/ _ \| | | | |_) | | | | | |   | |  \ V / </span>
+<span style="color: #00ff00"> | |_| | (_) | | | |  __/| |_| | | |   | |   | |  </span>
+<span style="color: #00b6ff">  \___/ \___/|_|_| |_|    \__,_| |_|   |_|   |_|  </span></pre>
+<p><span class="banner">Welcome to JoliPuTTY</span></p>
+<p class="byline"><strong>A playful fork of Simon Tatham's PuTTY</strong><br>
+<span>by Sylvain Cresto ;-)</span></p>
+</div>
+<p>
+JoliPuTTY is a playful fork of PuTTY, the free (MIT-licensed) Windows Telnet and SSH client, which gives PuTTY a modern WinUI 3 look on Windows 11, with tabs, split panes and a redesigned configuration window. This manual documents JoliPuTTY, and PuTTY's companion utilities PSCP, PSFTP, Plink, Pageant and PuTTYgen.
+</p>
+<p>
+<a href="joliputty.html#joliputty">chapter 2</a> describes what JoliPuTTY does differently from PuTTY. The rest of the manual is PuTTY's own: it still says &#8216;PuTTY&#8217;, and describes PuTTY's configuration dialog box, whose settings JoliPuTTY keeps, although some of them are on different pages (see <a href="joliputty.html#jp-config-moved">section 2.5.7</a>).
+</p>
+<p>
+Like PuTTY's, this manual is about the Windows versions of the tools. JoliPuTTY doesn't change the <a name="i0"></a>Unix version of PuTTY.
+</p>
+<p>
+<em>JoliPuTTY is an independent project, and is not affiliated with the PuTTY project. It is provided as is, without any warranty.</em>
+</p>
+<p>
+This manual is copyright 1997-2026 Simon Tatham, with portions (the preface and <a href="joliputty.html#joliputty">chapter 2</a>) copyright 2026 Sylvain Cresto. All rights reserved. You may distribute this documentation under the MIT licence. See <a href="licence.html#licence">appendix D</a> for the licence text in full.
+</p>
+
+<ul>
+<li><a href="intro.html#intro">Chapter 1: Introduction to PuTTY</a>
+<ul>
+<li><a href="intro.html#you-what">1.1 What are SSH, Telnet, Rlogin, and SUPDUP?</a></li>
+<li><a href="intro.html#which-one">1.2 How do SSH, Telnet, Rlogin, and SUPDUP differ?</a></li>
+</ul></li>
+<li><a href="joliputty.html#joliputty">Chapter 2: What's new in JoliPuTTY</a>
+<ul>
+<li><a href="joliputty.html#jp-install">2.1 Installing and running JoliPuTTY</a></li>
+<li><a href="joliputty.html#jp-window">2.2 The main window</a></li>
+<li><a href="joliputty.html#jp-pools">2.3 Pools of copied text</a></li>
+<li><a href="joliputty.html#jp-keys">2.4 Keyboard shortcuts</a></li>
+<li><a href="joliputty.html#jp-config">2.5 The configuration window</a></li>
+<li><a href="joliputty.html#jp-ssh">2.6 What servers see</a></li>
+</ul></li>
+<li><a href="gs.html#gs">Chapter 3: Getting started with PuTTY</a>
+<ul>
+<li><a href="gs.html#gs-insecure">3.1 Starting a session</a></li>
+<li><a href="gs.html#gs-hostkey">3.2 Verifying the host key (SSH only)</a></li>
+<li><a href="gs.html#gs-login">3.3 Logging in</a></li>
+<li><a href="gs.html#gs-session">3.4 After logging in</a></li>
+<li><a href="gs.html#gs-logout">3.5 Logging out</a></li>
+</ul></li>
+<li><a href="using.html#using">Chapter 4: Using PuTTY</a>
+<ul>
+<li><a href="using.html#using-session">4.1 During your session</a></li>
+<li><a href="using.html#using-logging">4.2 Creating a log file of your session</a></li>
+<li><a href="using.html#using-translation">4.3 Altering your character set configuration</a></li>
+<li><a href="using.html#using-x-forwarding">4.4 Using X11 forwarding in SSH</a></li>
+<li><a href="using.html#using-port-forwarding">4.5 Using port forwarding in SSH</a></li>
+<li><a href="using.html#using-serial">4.6 Connecting to a local serial line</a></li>
+<li><a href="using.html#using-rawprot">4.7 Making raw TCP connections</a></li>
+<li><a href="using.html#using-telnet">4.8 Connecting using the Telnet protocol</a></li>
+<li><a href="using.html#using-rlogin">4.9 Connecting using the Rlogin protocol</a></li>
+<li><a href="using.html#using-supdup">4.10 Connecting using the SUPDUP protocol</a></li>
+<li><a href="using.html#using-cmdline">4.11 The PuTTY command line</a></li>
+</ul></li>
+<li><a href="config.html#config">Chapter 5: Configuring PuTTY</a>
+<ul>
+<li><a href="config.html#config-session">5.1 The Session panel</a></li>
+<li><a href="config.html#config-logging">5.2 The Logging panel</a></li>
+<li><a href="config.html#config-terminal">5.3 The Terminal panel</a></li>
+<li><a href="config.html#config-keyboard">5.4 The Keyboard panel</a></li>
+<li><a href="config.html#config-bell">5.5 The Bell panel</a></li>
+<li><a href="config.html#config-features">5.6 The Features panel</a></li>
+<li><a href="config.html#config-window">5.7 The Window panel</a></li>
+<li><a href="config.html#config-appearance">5.8 The Appearance panel</a></li>
+<li><a href="config.html#config-behaviour">5.9 The Behaviour panel</a></li>
+<li><a href="config.html#config-translation">5.10 The Translation panel</a></li>
+<li><a href="config.html#config-selection">5.11 The Selection panel</a></li>
+<li><a href="config.html#config-selection-copy">5.12 The Copy panel</a></li>
+<li><a href="config.html#config-colours">5.13 The Colours panel</a></li>
+<li><a href="config.html#config-connection">5.14 The Connection panel</a></li>
+<li><a href="config.html#config-data">5.15 The Data panel</a></li>
+<li><a href="config.html#config-proxy">5.16 The Proxy panel</a></li>
+<li><a href="config.html#config-ssh">5.17 The SSH panel</a></li>
+<li><a href="config.html#config-ssh-kex">5.18 The Kex panel</a></li>
+<li><a href="config.html#config-ssh-hostkey">5.19 The Host Keys panel</a></li>
+<li><a href="config.html#config-ssh-encryption">5.20 The Cipher panel</a></li>
+<li><a href="config.html#config-ssh-auth">5.21 The Auth panel</a></li>
+<li><a href="config.html#config-ssh-auth-creds">5.22 The Credentials panel</a></li>
+<li><a href="config.html#config-ssh-auth-gssapi">5.23 The GSSAPI panel</a></li>
+<li><a href="config.html#config-ssh-tty">5.24 The TTY panel</a></li>
+<li><a href="config.html#config-ssh-x11">5.25 The X11 panel</a></li>
+<li><a href="config.html#config-ssh-portfwd">5.26 The Tunnels panel</a></li>
+<li><a href="config.html#config-ssh-bugs">5.27 The Bugs and More Bugs panels</a></li>
+<li><a href="config.html#config-psusan">5.28 The &#8216;Bare <code>ssh-connection</code>&#8217; protocol</a></li>
+<li><a href="config.html#config-serial">5.29 The Serial panel</a></li>
+<li><a href="config.html#config-telnet">5.30 The Telnet panel</a></li>
+<li><a href="config.html#config-rlogin">5.31 The Rlogin panel</a></li>
+<li><a href="config.html#config-supdup">5.32 The SUPDUP panel</a></li>
+<li><a href="config.html#config-file">5.33 Storing configuration in a file</a></li>
+</ul></li>
+<li><a href="pscp.html#pscp">Chapter 6: Using PSCP to transfer files securely</a>
+<ul>
+<li><a href="pscp.html#pscp-starting">6.1 Starting PSCP</a></li>
+<li><a href="pscp.html#pscp-usage">6.2 PSCP Usage</a></li>
+</ul></li>
+<li><a href="psftp.html#psftp">Chapter 7: Using PSFTP to transfer files securely</a>
+<ul>
+<li><a href="psftp.html#psftp-starting">7.1 Starting PSFTP</a></li>
+<li><a href="psftp.html#psftp-commands">7.2 Running PSFTP</a></li>
+<li><a href="psftp.html#psftp-pubkey">7.3 Using public key authentication with PSFTP</a></li>
+</ul></li>
+<li><a href="plink.html#plink">Chapter 8: Using the command-line connection tool Plink</a>
+<ul>
+<li><a href="plink.html#plink-starting">8.1 Starting Plink</a></li>
+<li><a href="plink.html#plink-usage">8.2 Using Plink</a></li>
+<li><a href="plink.html#plink-batch">8.3 Using Plink in batch files and scripts</a></li>
+<li><a href="plink.html#plink-git">8.4 Using Plink with Git</a></li>
+<li><a href="plink.html#plink-cvs">8.5 Using Plink with CVS</a></li>
+<li><a href="plink.html#plink-wincvs">8.6 Using Plink with WinCVS</a></li>
+</ul></li>
+<li><a href="pubkey.html#pubkey">Chapter 9: Using public keys for SSH authentication</a>
+<ul>
+<li><a href="pubkey.html#pubkey-intro">9.1 Public key authentication - an introduction</a></li>
+<li><a href="pubkey.html#pubkey-puttygen">9.2 Using PuTTYgen, the PuTTY key generator</a></li>
+<li><a href="pubkey.html#pubkey-gettingready">9.3 Getting ready for public key authentication</a></li>
+</ul></li>
+<li><a href="pageant.html#pageant">Chapter 10: Using Pageant for authentication</a>
+<ul>
+<li><a href="pageant.html#pageant-start">10.1 Getting started with Pageant</a></li>
+<li><a href="pageant.html#pageant-mainwin">10.2 The Pageant main window</a></li>
+<li><a href="pageant.html#pageant-cmdline">10.3 The Pageant command line</a></li>
+<li><a href="pageant.html#pageant-forward">10.4 Using agent forwarding</a></li>
+<li><a href="pageant.html#pageant-deferred-decryption">10.5 Loading keys without decrypting them</a></li>
+<li><a href="pageant.html#pageant-security">10.6 Security considerations</a></li>
+</ul></li>
+<li><a href="errors.html#errors">Chapter 11: Common error messages</a>
+<ul>
+<li><a href="errors.html#errors-hostkey-absent">11.1 &#8216;The host key is not cached for this server&#8217;</a></li>
+<li><a href="errors.html#errors-hostkey-wrong">11.2 &#8216;WARNING - POTENTIAL SECURITY BREACH!&#8217;</a></li>
+<li><a href="errors.html#errors-cert-mismatch">11.3 &#8216;This server presented a certified host key which was signed by a different certification authority ...&#8217;</a></li>
+<li><a href="errors.html#errors-ssh-protocol">11.4 &#8216;SSH protocol version 2 required by our configuration but remote only provides (old, insecure) SSH-1&#8217;</a></li>
+<li><a href="errors.html#errors-cipher-warning">11.5 &#8216;The first cipher supported by the server is ... below the configured warning threshold&#8217;</a></li>
+<li><a href="errors.html#errors-toomanyauth">11.6 &#8216;Remote side sent disconnect message type 2 (protocol error): "Too many authentication failures for root"&#8217;</a></li>
+<li><a href="errors.html#errors-internal">11.7 &#8216;Internal error&#8217;, &#8216;Internal fault&#8217;, &#8216;Assertion failed&#8217;</a></li>
+<li><a href="errors.html#errors-cant-load-key">11.8 &#8216;Unable to use key file&#8217;, &#8216;Couldn't load private key&#8217;, &#8216;Couldn't load this key&#8217;</a></li>
+<li><a href="errors.html#errors-refused">11.9 &#8216;Server refused our key&#8217;, &#8216;Server refused our public key&#8217;, &#8216;Key refused&#8217;</a></li>
+<li><a href="errors.html#errors-access-denied">11.10 &#8216;Access denied&#8217;, &#8216;Authentication refused&#8217;</a></li>
+<li><a href="errors.html#errors-no-auth">11.11 &#8216;No supported authentication methods available&#8217;</a></li>
+<li><a href="errors.html#errors-crc">11.12 &#8216;Incorrect MAC received on packet&#8217; or &#8216;Incorrect CRC received on packet&#8217;</a></li>
+<li><a href="errors.html#errors-garbled">11.13 &#8216;Incoming packet was garbled on decryption&#8217;</a></li>
+<li><a href="errors.html#errors-x11-proxy">11.14 &#8216;PuTTY X11 proxy: <em>various errors</em>&#8217;</a></li>
+<li><a href="errors.html#errors-connaborted">11.15 &#8216;Network error: Software caused connection abort&#8217;</a></li>
+<li><a href="errors.html#errors-connreset">11.16 &#8216;Network error: Connection reset by peer&#8217;</a></li>
+<li><a href="errors.html#errors-connrefused">11.17 &#8216;Network error: Connection refused&#8217;</a></li>
+<li><a href="errors.html#errors-conntimedout">11.18 &#8216;Network error: Connection timed out&#8217;</a></li>
+<li><a href="errors.html#errors-cannotassignaddress">11.19 &#8216;Network error: Cannot assign requested address&#8217;</a></li>
+</ul></li>
+<li><a href="faq.html#faq">Appendix A: PuTTY FAQ</a>
+<ul>
+<li><a href="faq.html#faq-intro">A.1 Introduction</a></li>
+<li><a href="faq.html#faq-support">A.2 Features supported in PuTTY</a></li>
+<li><a href="faq.html#faq-ports">A.3 Ports to other operating systems</a></li>
+<li><a href="faq.html#faq-embedding">A.4 Embedding PuTTY in other programs</a></li>
+<li><a href="faq.html#faq-details">A.5 Details of PuTTY's operation</a></li>
+<li><a href="faq.html#faq-howto">A.6 HOWTO questions</a></li>
+<li><a href="faq.html#faq-trouble">A.7 Troubleshooting</a></li>
+<li><a href="faq.html#faq-secure">A.8 Security questions</a></li>
+<li><a href="faq.html#faq-admin">A.9 Administrative questions</a></li>
+<li><a href="faq.html#faq-misc">A.10 Miscellaneous questions</a></li>
+</ul></li>
+<li><a href="feedback.html#feedback">Appendix B: Feedback and bug reporting</a>
+<ul>
+<li><a href="feedback.html#feedback-general">B.1 General guidelines</a></li>
+<li><a href="feedback.html#feedback-bugs">B.2 Reporting bugs</a></li>
+<li><a href="feedback.html#feedback-vulns">B.3 Reporting security vulnerabilities</a></li>
+<li><a href="feedback.html#feedback-features">B.4 Requesting extra features</a></li>
+<li><a href="feedback.html#feedback-feature-priority">B.5 Requesting features that have already been requested</a></li>
+<li><a href="feedback.html#feedback-patches">B.6 Contributing to the code</a></li>
+<li><a href="feedback.html#feedback-workarounds">B.7 Workarounds for SSH server bugs</a></li>
+<li><a href="feedback.html#feedback-support">B.8 Support requests</a></li>
+<li><a href="feedback.html#feedback-webadmin">B.9 Web server administration</a></li>
+<li><a href="feedback.html#feedback-permission">B.10 Asking permission for things</a></li>
+<li><a href="feedback.html#feedback-mirrors">B.11 Mirroring the PuTTY web site</a></li>
+<li><a href="feedback.html#feedback-compliments">B.12 Praise and compliments</a></li>
+<li><a href="feedback.html#feedback-address">B.13 E-mail address</a></li>
+</ul></li>
+<li><a href="ppk.html#ppk">Appendix C: PPK file format</a>
+<ul>
+<li><a href="ppk.html#ppk-overview">C.1 Overview</a></li>
+<li><a href="ppk.html#ppk-outer">C.2 Outer layer</a></li>
+<li><a href="ppk.html#ppk-privkeys">C.3 Private key encodings</a></li>
+<li><a href="ppk.html#ppk-keys">C.4 Key derivation</a></li>
+<li><a href="ppk.html#ppk-old">C.5 Older versions of the PPK format</a></li>
+</ul></li>
+<li><a href="licence.html#licence">Appendix D: PuTTY Licence</a></li>
+<li><a href="udp.html#udp">Appendix E: PuTTY hacking guide</a>
+<ul>
+<li><a href="udp.html#udp-portability">E.1 Cross-OS portability</a></li>
+<li><a href="udp.html#udp-multi-backend">E.2 Multiple backends treated equally</a></li>
+<li><a href="udp.html#udp-globals">E.3 Multiple sessions per process on some platforms</a></li>
+<li><a href="udp.html#udp-pure-c">E.4 C, not C++</a></li>
+<li><a href="udp.html#udp-security">E.5 Security-conscious coding</a></li>
+<li><a href="udp.html#udp-multi-compiler">E.6 Independence of specific compiler</a></li>
+<li><a href="udp.html#udp-small">E.7 Small code size</a></li>
+<li><a href="udp.html#udp-single-threaded">E.8 Single-threaded code</a></li>
+<li><a href="udp.html#udp-keystrokes">E.9 Keystrokes sent to the server wherever possible</a></li>
+<li><a href="udp.html#udp-640x480">E.10 640&#215;480 friendliness in configuration panels</a></li>
+<li><a href="udp.html#udp-ssh-coroutines">E.11 Coroutines in protocol code</a></li>
+<li><a href="udp.html#udp-traits">E.12 Explicit vtable structures to implement traits</a></li>
+<li><a href="udp.html#udp-perfection">E.13 Do as we say, not as we do</a></li>
+</ul></li>
+<li><a href="pgpkeys.html#pgpkeys">Appendix F: PuTTY download keys and signatures</a>
+<ul>
+<li><a href="pgpkeys.html#pgpkeys-pubkey">F.1 Public keys</a></li>
+<li><a href="pgpkeys.html#pgpkeys-security">F.2 Security details</a></li>
+<li><a href="pgpkeys.html#pgpkeys-rollover">F.3 Key rollover</a></li>
+</ul></li>
+<li><a href="sshnames.html#sshnames">Appendix G: SSH-2 names specified for PuTTY</a>
+<ul>
+<li><a href="sshnames.html#sshnames-channel">G.1 Connection protocol channel request names</a></li>
+<li><a href="sshnames.html#sshnames-kex">G.2 Key exchange method names</a></li>
+<li><a href="sshnames.html#sshnames-encrypt">G.3 Encryption algorithm names</a></li>
+<li><a href="sshnames.html#sshnames-agent">G.4 Agent extension request names</a></li>
+</ul></li>
+<li><a href="authplugin.html#authplugin">Appendix H: PuTTY authentication plugin protocol</a>
+<ul>
+<li><a href="authplugin.html#authplugin-req">H.1 Requirements</a></li>
+<li><a href="authplugin.html#authplugin-transport">H.2 Transport and configuration</a></li>
+<li><a href="authplugin.html#authplugin-formats">H.3 Data formats and marshalling</a></li>
+<li><a href="authplugin.html#authplugin-version">H.4 Protocol versioning</a></li>
+<li><a href="authplugin.html#authplugin-overview">H.5 Overview and sequence of events</a></li>
+<li><a href="authplugin.html#authplugin-messages">H.6 Message formats</a></li>
+<li><a href="authplugin.html#authplugin-refs">H.7 References</a></li>
+</ul></li>
+<li><a href="privacy.html#privacy">Appendix I: PuTTY privacy considerations</a>
+<ul>
+<li><a href="privacy.html#privacy-local">I.1 Information that PuTTY stores locally</a></li>
+<li><a href="privacy.html#privacy-network">I.2 Sending information over the network</a></li>
+<li><a href="privacy.html#privacy-config">I.3 Configuration</a></li>
+<li><a href="privacy.html#privacy-modified">I.4 Modified versions of PuTTY</a></li>
+<li><a href="privacy.html#privacy-joliputty">I.5 JoliPuTTY</a></li>
+</ul></li>
+<li><a href="IndexPage.html#Index">Index</a></li>
+</ul>
+
+<hr><p class="feedback">JoliPuTTY is an independent project, based on PuTTY, and not affiliated with the PuTTY project. To report a problem with JoliPuTTY, or with this manual, see its <a href="https://github.com/scresto09/joliputty/issues">issues page</a>.</p><address>
+[JoliPuTTY 0.2, based on PuTTY 0.85]</address></body>
+</html>
