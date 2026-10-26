@@ -99,20 +99,105 @@ add_dependencies(psftp generated_licence_h)
 
 add_sources_from_current_dir(psocks nohelp.c)
 
-add_executable(putty
-  window.c
-  putty.c
-  help.c
-  ${CMAKE_SOURCE_DIR}/stubs/no-console.c
-  putty.rc)
-be_list(putty PuTTY SSH SERIAL OTHERBACKENDS)
-add_dependencies(putty generated_licence_h)
-target_link_libraries(putty
-  guiterminal guimisc eventloop sshclient otherbackends settings network crypto
-  utils
-  ${platform_libraries})
-set_target_properties(putty PROPERTIES WIN32_EXECUTABLE ON)
-installed_program(putty)
+# PuTTY itself uses the WinUI 3 front end in the winui subdirectory
+# (PuTTYtel and pterm still use the classic Win32 one in window.c).
+include(${CMAKE_SOURCE_DIR}/cmake/winui.cmake)
+
+if(TARGET winui_sdk)
+  add_executable(putty
+    winui/winui-window.c
+    winui/winui-config.c
+    winui/winui-sessions.c
+    winui/winui-host.cpp
+    winui/winui-dialog.cpp
+    putty.c
+    help.c
+    ${CMAKE_SOURCE_DIR}/stubs/no-console.c
+    putty.rc)
+  # (this front end's name: see also WUI_APP_NAME in winui/wui.h)
+  be_list(putty JoliPuTTY SSH SERIAL OTHERBACKENDS)
+  add_dependencies(putty generated_licence_h)
+  # (putty.c leaves the startup config box to the WinUI front end)
+  target_compile_definitions(putty PRIVATE PUTTY_WINUI)
+  target_link_libraries(putty
+    guiterminal guimisc eventloop sshclient otherbackends settings network crypto
+    utils winui_sdk
+    ${platform_libraries})
+  # (the program's called jputty.exe; the target keeps its name, which
+  # the rest of the build refers to it by)
+  set_target_properties(putty PROPERTIES
+    OUTPUT_NAME jputty
+    WIN32_EXECUTABLE ON
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON)
+  winui_copy_runtime(putty)
+  installed_program(putty)
+
+  # (its version, from the git tags, checked at each build like
+  # cmake_commit.c: see cmake/joliputty-version.cmake)
+  set(GENERATED_JOLIPUTTY_VERSION_H
+    ${GENERATED_SOURCES_DIR}/joliputty-version.h)
+  set(INTERMEDIATE_JOLIPUTTY_VERSION_H ${GENERATED_JOLIPUTTY_VERSION_H}.tmp)
+  add_custom_target(check_joliputty_version
+    BYPRODUCTS ${INTERMEDIATE_JOLIPUTTY_VERSION_H}
+    COMMAND ${CMAKE_COMMAND}
+      -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+      -DOUTPUT_FILE=${INTERMEDIATE_JOLIPUTTY_VERSION_H}
+      -P ${CMAKE_SOURCE_DIR}/cmake/joliputty-version.cmake
+    DEPENDS ${CMAKE_SOURCE_DIR}/cmake/joliputty-version.cmake
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Checking JoliPuTTY's version")
+  add_custom_target(joliputty_version_h
+    BYPRODUCTS ${GENERATED_JOLIPUTTY_VERSION_H}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${INTERMEDIATE_JOLIPUTTY_VERSION_H} ${GENERATED_JOLIPUTTY_VERSION_H}
+    DEPENDS check_joliputty_version ${INTERMEDIATE_JOLIPUTTY_VERSION_H}
+    COMMENT "Updating joliputty-version.h")
+  add_dependencies(putty joliputty_version_h)
+
+  # (its MSIX package, for the Microsoft Store, made on request with
+  # "cmake --build . --config Release --target msix": see
+  # msix/make_msix.ps1)
+  if(winui_arch MATCHES "^(x64|arm64)$")
+    add_custom_target(msix
+      COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+        -File ${CMAKE_CURRENT_SOURCE_DIR}/msix/make_msix.ps1
+        -ExeDir $<TARGET_FILE_DIR:putty>
+        -WinUIInclude ${WINAPPSDK_Runtime_DIR}/include
+        -Arch ${winui_arch}
+        -VersionHeader ${GENERATED_JOLIPUTTY_VERSION_H}
+        -StagingDir ${CMAKE_BINARY_DIR}/msix/staging
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      DEPENDS putty
+      VERBATIM)
+
+    # (and its MSI installer, with WiX 3.14 or later, found on the PATH
+    # or where its installer says, in WIX: "cmake --build . --config
+    # Release --target msi", making JoliPuTTY_<version>_<arch>.msi, on a
+    # joliputty-X.Y tag only; see msi/make_msi.cmake and msi/joliputty.wxs)
+    find_program(WIX_CANDLE candle HINTS "$ENV{WIX}/bin")
+    find_program(WIX_LIGHT light HINTS "$ENV{WIX}/bin")
+    if(WIX_CANDLE AND WIX_LIGHT)
+      add_custom_target(msi
+        COMMAND ${CMAKE_COMMAND}
+          -DVERSION_H=${GENERATED_JOLIPUTTY_VERSION_H}
+          -DWIX_CANDLE=${WIX_CANDLE}
+          -DWIX_LIGHT=${WIX_LIGHT}
+          -DARCH=${winui_arch}
+          -DBUILDDIR=$<TARGET_FILE_DIR:putty>
+          -DMSI_DIR=${CMAKE_BINARY_DIR}/msi
+          -DOUT_DIR=${CMAKE_BINARY_DIR}
+          -DWXS=${CMAKE_CURRENT_SOURCE_DIR}/msi/joliputty.wxs
+          -DWXS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/msi
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/msi/make_msi.cmake
+        DEPENDS putty
+        VERBATIM)
+    else()
+      message(STATUS
+        "WiX not found: no 'msi' target to make JoliPuTTY's installer")
+    endif()
+  endif()
+endif()
 
 add_executable(puttytel
   window.c

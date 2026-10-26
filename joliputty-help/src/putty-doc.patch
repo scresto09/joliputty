@@ -1,0 +1,157 @@
+diff -ru a/config.but b/config.but
+--- a/config.but	2026-10-26 01:38:53.823558938 +0100
++++ b/config.but	2026-10-26 01:38:53.838186915 +0100
+@@ -6,12 +6,21 @@
+ start a session. Some options can also be changed in the middle of a
+ session, by selecting \q{Change Settings} from the window menu.
+ 
++\e{In JoliPuTTY:} the configuration window has the same settings, but
++works differently, and has some of them on other pages: see
++\k{jp-config}, and \k{jp-config-moved} for where they are. To change
++them in the middle of a session, double-click its tab.
++
+ \H{config-session} The Session panel
+ 
+ The Session configuration panel contains the basic options you need
+ to specify in order to open a session at all, and also allows you to
+ save your settings to be reloaded later.
+ 
++\e{In JoliPuTTY:} this is the Address page (or the Session page, when
++you change the settings of a running session), and the saved sessions
++are on the Sessions page (see \k{jp-sessions}).
++
+ \S{config-hostname} The \i{host name} section
+ 
+ The top box on the Session panel, labelled \q{Specify the destination
+@@ -62,6 +71,13 @@
+ 
+ \S{config-saving} \ii{Loading and storing saved sessions}
+ 
++\e{In JoliPuTTY:} the saved sessions aren't in a list on this page,
++with Load, Save and Delete buttons: they're on the Sessions page,
++where you can open one to edit it, then \q{Save} it, and where each
++one's \q{...} button has the rest (save as, rename, duplicate,
++delete...). Sessions can be put in folders. See \k{jp-sessions},
++\k{jp-folders} and \k{jp-edit}. What follows is how PuTTY does it.
++
+ The next part of the Session configuration panel allows you to save
+ your preferred PuTTY options so they will appear automatically the
+ next time you start PuTTY. It also allows you to create \e{saved
+@@ -128,6 +144,10 @@
+ 
+ \S{config-closeonexit} \q{\ii{Close window} on exit}
+ 
++\e{In JoliPuTTY:} this setting is on the Window > Behaviour page, as
++\q{Close the tab when the session ends}, as it's the session's tab
++that closes, not the window.
++
+ Finally in the Session panel, there is an option labelled \q{Close
+ window on exit}. This controls whether the PuTTY \i{terminal window}
+ disappears as soon as the session inside it terminates. If you are
+@@ -148,6 +168,9 @@
+ The Logging configuration panel allows you to save \i{log file}s of your
+ PuTTY sessions, for debugging, analysis or future reference.
+ 
++\e{In JoliPuTTY:} the Logging panel is under Terminal, as Terminal >
++Logging.
++
+ The main option is a radio-button set that specifies whether PuTTY
+ will log anything at all. The options are:
+ 
+diff -ru a/gs.but b/gs.but
+--- a/gs.but	2026-10-26 01:38:53.819722230 +0100
++++ b/gs.but	2026-10-26 01:38:53.835913135 +0100
+@@ -9,6 +9,14 @@
+ allows you to control everything PuTTY can do. See \k{config} for
+ details of all the things you can control.
+ 
++\e{In JoliPuTTY:} when it starts, JoliPuTTY shows its Welcome tab.
++Press the \q{+} button in the title bar to open the configuration
++window on its Address page, where you'll find the \q{Host Name},
++\q{Port} and \q{Connection type} described below; then press
++\q{Connect}, which is JoliPuTTY's \q{Open}. Or, quicker still, click
++the arrow beside the tabs, and type the host name in the box at the
++top of the pop-up (see \k{jp-popup}).
++
+ You don't usually need to change most of the configuration options.
+ To start the simplest kind of session, all you need to do is to
+ enter a few basic parameters.
+@@ -180,6 +188,10 @@
+ system administrator. When the server processes your logout command,
+ the PuTTY window should close itself automatically.
+ 
++\e{In JoliPuTTY:} it's the session's tab that closes (see
++\k{config-closeonexit}); and the button to close a session is the
++\q{\u00D7{x}} on its tab, or Ctrl+F4.
++
+ You \e{can} close a PuTTY session using the \i{Close button} in the
+ window border, but this might confuse the server - a bit like
+ hanging up a telephone unexpectedly in the middle of a conversation.
+diff -ru a/using.but b/using.but
+--- a/using.but	2026-10-26 01:38:53.821474435 +0100
++++ b/using.but	2026-10-26 01:38:53.836529383 +0100
+@@ -92,6 +92,10 @@
+ You can customise much of this behaviour, for instance to enable copy
+ and paste from the keyboard; see \k{config-selection}.
+ 
++\e{In JoliPuTTY:} the terminal's menu also has \q{Copy} and
++\q{Paste}, and JoliPuTTY keeps what you copy in pools, to paste again
++later (see \k{jp-pools}).
++
+ \S{using-scrollback} \I{scrollback}Scrolling the screen back
+ 
+ PuTTY keeps track of text that has scrolled up off the top of the
+@@ -126,6 +130,15 @@
+ by holding Ctrl and clicking with the right mouse button anywhere
+ in the \i{PuTTY window}.)
+ 
++\e{In JoliPuTTY:} the window's menu (the icon at the top left, or a
++right-click on the title bar) only has \q{Full Screen}, \q{Help} and
++\q{About}. The other commands described below are in the menu of
++each tab (right-click the tab: \q{Event Log}, \q{Duplicate Session},
++\q{Restart Session}, \q{Change Settings}), or in the terminal's
++menu (right-click in the terminal, or Ctrl+right-click: \q{Special
++Command}, \q{Copy All to Clipboard}, \q{Clear Scrollback}, \q{Reset
++Terminal}). See \k{jp-tabs} and \k{jp-termmenu}.
++
+ \S2{using-eventlog} The PuTTY \i{Event Log}
+ 
+ If you choose \q{Event Log} from the system menu, a small window
+@@ -142,6 +155,9 @@
+ (The Event Log is not the same as the facility to create a log file
+ of your session; that's described in \k{using-logging}.)
+ 
++\e{In JoliPuTTY:} \q{Event Log} is in the tab's menu, and its window
++can be left open while you work.
++
+ \S2{using-specials} \ii{Special commands}
+ 
+ Depending on the protocol used for the current session, there may be
+@@ -280,6 +296,15 @@
+ sets of stored session details you have previously saved. See
+ \k{config-saving} for details of how to create saved sessions.
+ 
++\e{In JoliPuTTY:} sessions open in tabs rather than in windows.
++\q{New Tab} (in the tab's menu), or the \q{+} button, opens the
++configuration window for a new session; \q{Duplicate Session} opens
++the same session in a new tab; \q{Restart Session} works in a tab
++that's still connected too, after asking; and the saved sessions are
++in the pop-up that the arrow beside the tabs opens (\k{jp-popup}).
++Hold Shift as you press \q{+}, or as you choose a session in the
++pop-up, to open it in a new window.
++
+ \S2{using-changesettings} \I{settings, changing}Changing your
+ session settings
+ 
+@@ -298,6 +323,11 @@
+ from this dialog box. See \k{config-saving} for more on saved
+ sessions.
+ 
++\e{In JoliPuTTY:} double-click the tab, or choose \q{Change
++Settings} in its menu. \q{Apply} applies the changes to the session,
++and \q{Apply and save} saves them in its saved session as well (see
++\k{jp-midsession}).
++
+ \S2{using-copyall} \i{Copy All to Clipboard}
+ 
+ This system menu option provides a convenient way to copy the whole

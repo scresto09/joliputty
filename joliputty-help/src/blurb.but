@@ -1,0 +1,41 @@
+\define{dash} \u2013{-}
+
+\title JoliPuTTY User Manual
+
+\cfg{xhtml-leaf-level}{1}
+\cfg{xhtml-leaf-smallest-contents}{2}
+\cfg{xhtml-leaf-contains-contents}{true}
+\cfg{xhtml-head-end}{<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" type="text/css" href="joliputty.css">}
+\cfg{xhtml-body-end}{<p class="feedback">JoliPuTTY is an independent
+project, based on PuTTY, and not affiliated with the PuTTY project. To
+report a problem with JoliPuTTY, or with this manual, see its
+<a href="https://github.com/scresto09/joliputty/issues">issues page</a>.</p>}
+
+\cfg{html-template-fragment}{%k}{%b}
+
+\cfg{xhtml-contents-filename}{index.html}
+\cfg{xhtml-template-filename}{%k.html}
+
+JoliPuTTY is a playful fork of PuTTY, the free (MIT-licensed) Windows
+Telnet and SSH client, which gives PuTTY a modern WinUI 3 look on
+Windows 11, with tabs, split panes and a redesigned configuration
+window. This manual documents JoliPuTTY, and PuTTY's companion
+utilities PSCP, PSFTP, Plink, Pageant and PuTTYgen.
+
+\k{joliputty} describes what JoliPuTTY does differently from PuTTY.
+The rest of the manual is PuTTY's own: it still says \q{PuTTY}, and
+describes PuTTY's configuration dialog box, whose settings JoliPuTTY
+keeps, although some of them are on different pages (see
+\k{jp-config-moved}).
+
+Like PuTTY's, this manual is about the Windows versions of the
+tools. JoliPuTTY doesn't change the \i{Unix version} of PuTTY.
+
+\e{JoliPuTTY is an independent project, and is not affiliated with
+the PuTTY project. It is provided as is, without any warranty.}
+
+\copyright This manual is copyright \shortcopyrightdetails, with
+portions (the preface and \k{joliputty}) copyright 2026 Sylvain
+Cresto. All rights reserved. You may distribute this documentation under the MIT
+licence. See \k{licence} for the licence text in full.

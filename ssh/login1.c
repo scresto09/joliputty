@@ -389,7 +389,7 @@ static void ssh1_login_process_queue(PacketProtocolLayer *ppl)
         s->cur_prompt->to_server = true;
         s->cur_prompt->from_server = false;
         s->cur_prompt->name = dupstr("SSH login name");
-        add_prompt(s->cur_prompt, dupstr("login as: "), true);
+        add_prompt(s->cur_prompt, dupstr("login: "), true);
         s->spr = seat_get_userpass_input(
             ppl_get_iseat(&s->ppl), s->cur_prompt);
         while (s->spr.kind == SPRK_INCOMPLETE) {

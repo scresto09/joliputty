@@ -146,7 +146,23 @@ struct WinGuiSeat {
     WPARAM last_wm_mousemove_wParam, last_wm_ncmousemove_wParam;
     LPARAM last_wm_mousemove_lParam, last_wm_ncmousemove_lParam;
     wchar_t pending_surrogate;
+
+    struct EventLog *eventlog;         /* owned by dialog.c */
+    /* (if not NULL, called each time an event's added to it, for a
+     * front end that shows it in a window of its own) */
+    void (*eventlog_changed)(WinGuiSeat *wgs);
 };
+
+void eventlog_free(struct EventLog *el); /* in dialog.c */
+/* The events in a session's Event Log, oldest first, each its time, a
+ * tab, and what happened (in dialog.c) */
+int eventlog_count(WinGuiSeat *wgs);
+const char *eventlog_get(WinGuiSeat *wgs, int i);
+/* For a front end with an About box of its own: the licence (with a
+ * blank line between paragraphs), and PuTTY's copyright, "(c) years
+ * Simon Tatham" (in dialog.c, which has licence.h) */
+const char *about_licence(void);
+const char *about_copyright(void);
 
 extern const LogPolicyVtable win_gui_logpolicy_vt; /* in dialog.c */
 

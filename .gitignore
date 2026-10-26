@@ -144,3 +144,25 @@ Makefile
 /windows/*.msi
 /windows/*.wixobj
 /windows/*.wixpdb
+# JoliPuTTY: packages downloaded by cmake/winui.cmake, and build outputs
+/cppwinrt/
+/nuget/
+/*.slnx
+/doc/*.slnx
+/x64/
+/Release/
+/RelWithDebInfo/
+/MinSizeRel/
+/msi/
+/msix/
+/*.msi
+/*.msix
+/*.wixobj
+/*.wixpdb
+# JoliPuTTY's manual: Halibut, fetched and built by make_help.sh, and
+# what it makes
+/joliputty-help/.halibut/
+/joliputty-help/html/
+# vim swap files
+*.swp
+*.swo

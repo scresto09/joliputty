@@ -12,6 +12,26 @@
 #include "version.h"
 #include "licence.h"
 
+#ifdef JOLIPUTTY_TEXTVER
+/* (in jputty.exe, JoliPuTTY's own version instead, from the
+ * joliputty-version.h putty.rc includes: see
+ * cmake/joliputty-version.cmake) */
+#undef TEXTVER
+#define TEXTVER JOLIPUTTY_TEXTVER
+#undef BINARY_VERSION
+#define BINARY_VERSION JOLIPUTTY_BINARY_VERSION
+#if JOLIPUTTY_RELEASE && !defined RELEASE
+#define RELEASE
+#endif
+#define VERSION_COMPANY "Sylvain Cresto"
+#define VERSION_PRODUCT "JoliPuTTY"
+#endif
+
+#ifndef VERSION_COMPANY
+#define VERSION_COMPANY "Simon Tatham"
+#define VERSION_PRODUCT "PuTTY suite"
+#endif
+
 /*
  * The actual VERSIONINFO resource.
  */
@@ -41,8 +61,8 @@ BEGIN
 	/* "lang-charset" LLLLCCCC = (UK English, Unicode) */
 	BLOCK "080904B0"
 	BEGIN
-	    VALUE "CompanyName",	"Simon Tatham"  /* required :/ */
-	    VALUE "ProductName",	"PuTTY suite"
+	    VALUE "CompanyName",	VERSION_COMPANY  /* required :/ */
+	    VALUE "ProductName",	VERSION_PRODUCT
 	    VALUE "FileDescription",	APPDESC
 	    VALUE "InternalName",	APPNAME
 	    VALUE "OriginalFilename",	APPNAME

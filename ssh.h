@@ -411,6 +411,9 @@ void ssh_ldisc_update(Ssh *ssh);
 void ssh_check_sendok(Ssh *ssh);
 void ssh_got_fallback_cmd(Ssh *ssh);
 bool ssh_is_bare(Ssh *ssh);
+/* The connection layer of an SSH-2 session that's up and running (for
+ * opening extra channels from the front end), or NULL */
+ConnectionLayer *ssh_get_connlayer(Backend *be);
 
 /* Communications back to ssh.c from the BPP */
 void ssh_conn_processed_data(Ssh *ssh);
@@ -1424,6 +1427,11 @@ bool platform_dit_available(void);
  * PuTTY version number formatted as an SSH version string.
  */
 extern const char sshver[];
+/* What a client says it is in its SSH version string, "SSH-2.0-" then
+ * these: its name (normally "PuTTY"), and its version, which starts
+ * with a '-' (normally sshver, if this is NULL). A front end can set
+ * them, as the WinUI one does, so as not to say it's PuTTY. */
+extern const char *ssh_client_name, *ssh_client_version;
 
 /*
  * Gross hack: pscp will try to start SFTP but fall back to scp1 if

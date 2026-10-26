@@ -1,7 +1,9 @@
 #include "rcstuff.h"
 #include "putty-rc.h"
+/* (JoliPuTTY's version, for version.rc2) */
+#include "joliputty-version.h"
 
-#define APPNAME "PuTTY"
+#define APPNAME "JoliPuTTY"
 #define APPDESC "SSH, Telnet, Rlogin, and SUPDUP client"
 
 IDI_MAINICON ICON "putty.ico"

@@ -832,7 +832,7 @@ void test_simple(void)
     test_bool_simple(CONF_true_colour, "TrueColour", true);
     test_bool_simple(CONF_system_colour, "UseSystemColours", false);
     test_bool_simple(CONF_try_palette, "TryPalette", false);
-    test_int_translated(CONF_mouse_is_xterm, "MouseIsXterm", 0,
+    test_int_translated(CONF_mouse_is_xterm, "MouseIsXterm", MOUSE_WINDOWS,
                         MOUSE_COMPROMISE, 0, MOUSE_XTERM, 1,
                         MOUSE_WINDOWS, 2, -1);
     test_bool_simple(CONF_rect_select, "RectSelect", false);

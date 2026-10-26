@@ -1861,6 +1861,7 @@ void term_clrsb(Terminal *term)
      * scrollback somewhere until now.
      */
     term->disptop = 0;
+    term->nhl = term->hlcur = 0;
 
     /*
      * Clear the actual scrollback.
@@ -2075,6 +2076,9 @@ Terminal *term_init(Conf *myconf, struct unicode_data *ucsdata, TermWin *win)
     term->has_focus = true;
     term->termstate = TOPLEVEL;
     term->selstate = NO_SELECTION;
+    term->hl = NULL;
+    term->nhl = term->hlcur = 0;
+    term->remote_cwd = NULL;
     term->answerback = strbuf_new();
 
     term_copy_stuff_from_conf(term);
@@ -2158,6 +2162,8 @@ void term_free(Terminal *term)
     sfree(term->post_bidi_cache);
 
     sfree(term->tabs);
+    sfree(term->hl);
+    sfree(term->remote_cwd);
 
     expire_timer_context(term);
     delete_callbacks_for_context(term);
@@ -2210,6 +2216,7 @@ void term_size(Terminal *term, int newrows, int newcols, int newsavelines)
     if (newcols < 1) newcols = 1;
 
     deselect(term);
+    term->nhl = term->hlcur = 0;
     swap_screen(term, 0, false, false);
 
     term->alt_t = term->marg_t = 0;
@@ -2731,6 +2738,24 @@ static void scroll(Terminal *term, int topline, int botline,
                     }
                 }
             }
+
+            /*
+             * Search highlights move up with their text, and go
+             * when it does.
+             */
+            if (term->nhl) {
+                size_t from, to, cur = term->nhl;
+                for (from = to = 0; from < term->nhl; from++) {
+                    TermHighlight h = term->hl[from];
+                    if (h.y >= seltop && h.y <= botline && --h.y < seltop)
+                        continue;
+                    if (from == term->hlcur)
+                        cur = to;
+                    term->hl[to++] = h;
+                }
+                term->nhl = to;
+                term->hlcur = (cur < to ? cur : to);
+            }
         }
     }
 
@@ -3201,6 +3226,30 @@ static void toggle_mode(Terminal *term, int mode, int query, bool state)
  * Process an OSC or similar sequence, with a whole embedded string,
  * like setting the window title or icon name.
  */
+static void set_remote_cwd(Terminal *term, const char *path, bool url)
+{
+    char *cwd = snewn(strlen(path) + 1, char), *q = cwd;
+    for (const char *p = path; *p; p++) {
+        /* (a URL's path has %xx for awkward characters) */
+        if (url && p[0] == '%' && isxdigit((unsigned char)p[1]) &&
+            isxdigit((unsigned char)p[2])) {
+            char hex[3] = { p[1], p[2], '\0' };
+            *q++ = (char)strtoul(hex, NULL, 16);
+            p += 2;
+        } else {
+            *q++ = *p;
+        }
+    }
+    *q = '\0';
+    sfree(term->remote_cwd);
+    term->remote_cwd = cwd;
+}
+
+const char *term_remote_cwd(Terminal *term)
+{
+    return term->remote_cwd;
+}
+
 static void do_osc(Terminal *term)
 {
     switch (term->osc_type) {
@@ -3232,6 +3281,28 @@ static void do_osc(Terminal *term)
                 term->wintitle_codepage = term->ucsdata->line_codepage;
                 term->win_title_pending = true;
                 term_schedule_update(term);
+            }
+            break;
+          case 7:
+            /* The current directory, as file://host/path */
+            if (!strncmp(term->osc_string, "file://", 7)) {
+                const char *path = strchr(term->osc_string + 7, '/');
+                if (path)
+                    set_remote_cwd(term, path, true);
+            }
+            break;
+          case 9:
+            /* ConEmu's (and Windows Terminal's) version, OSC 9;9;path
+             * (perhaps in quotes) */
+            if (!strncmp(term->osc_string, "9;", 2)) {
+                char *path = term->osc_string + 2;
+                size_t len = strlen(path);
+                if (len >= 2 && path[0] == '"' && path[len - 1] == '"') {
+                    path[len - 1] = '\0';
+                    path++;
+                }
+                if (*path)
+                    set_remote_cwd(term, path, false);
             }
             break;
           case 4:
@@ -6102,6 +6173,7 @@ static void do_paint(Terminal *term)
 
 
     /* The normal screen data */
+    size_t hlrow = 0;                  /* first highlight on this row */
     for (i = 0; i < term->rows; i++) {
         termline *ldata;
         termchar *lchars;
@@ -6118,6 +6190,8 @@ static void do_paint(Terminal *term)
 
         scrpos.y = i + term->disptop;
         ldata = lineptr(scrpos.y);
+        while (hlrow < term->nhl && term->hl[hlrow].y < scrpos.y)
+            hlrow++;
 
         /* Do Arabic shaping and bidi. */
         lchars = term_bidi_line(term, ldata, i);
@@ -6208,6 +6282,22 @@ static void do_paint(Terminal *term)
                 selected = false;
             tattr = (tattr ^ rv
                      ^ (selected ? ATTR_REVERSE : 0));
+
+            /* Search highlights */
+            for (size_t h = hlrow; h < term->nhl &&
+                     term->hl[h].y == scrpos.y; h++) {
+                if (scrpos.x >= term->hl[h].x0 && scrpos.x < term->hl[h].x1) {
+                    static const optionalrgb black = { true, 0, 0, 0 };
+                    static const optionalrgb found = { true, 0xFF, 0xD5, 0x4F };
+                    static const optionalrgb current = {
+                        true, 0xFF, 0x8C, 0x00 };
+                    tattr &= ~(ATTR_REVERSE | ATTR_DIM | ATTR_BLINK);
+                    tattr |= (h == term->hlcur ? ATTR_FOUNDCUR : ATTR_FOUND);
+                    tc.fg = black;
+                    tc.bg = (h == term->hlcur ? current : found);
+                    break;
+                }
+            }
 
             /* 'Real' blinking ? */
             if (term->blink_is_real && (tattr & ATTR_BLINK)) {
@@ -6594,6 +6684,113 @@ void term_scroll_to_selection(Terminal *term, int which_end)
     else if (y > 0)
         y = 0;
     term_scroll(term, -1, y);
+}
+
+/*
+ * For searching the terminal: the lines go from term_first_line (in
+ * the scrollback, or 0 if there's none) to term->rows - 1.
+ */
+int term_first_line(Terminal *term)
+{
+    return -sblines(term);
+}
+
+/*
+ * The text of a line, as wide characters, one character per cell
+ * (leaving out combining characters, and the right halves of wide
+ * characters; with a surrogate pair for a character outside the BMP,
+ * where wchar_t is UTF-16), and for each wchar_t, the column it's in.
+ * The caller frees both.
+ */
+wchar_t *term_line_text(Terminal *term, int y, int **cols, size_t *len)
+{
+    termline *ldata = lineptr(y);
+    int ncols = min(ldata->cols, term->cols);
+    wchar_t *text = snewn(2 * ncols + 1, wchar_t);
+    int *colof = snewn(2 * ncols + 1, int);
+    size_t n = 0;
+
+    for (int x = 0; x < ncols; x++) {
+        unsigned long uc = ldata->chars[x].chr;
+        if (uc == UCSWIDE)
+            continue;
+        /* (as in clipme) */
+        switch (uc & CSET_MASK) {
+          case CSET_LINEDRW:
+            uc = term->ucsdata->unitab_xterm[uc & 0xFF];
+            break;
+          case CSET_ASCII:
+            uc = term->ucsdata->unitab_line[uc & 0xFF];
+            break;
+          case CSET_SCOACS:
+            uc = term->ucsdata->unitab_scoacs[uc & 0xFF];
+            break;
+        }
+        switch (uc & CSET_MASK) {
+          case CSET_ACP:
+            uc = term->ucsdata->unitab_font[uc & 0xFF];
+            break;
+          case CSET_OEMCP:
+            uc = term->ucsdata->unitab_oemcp[uc & 0xFF];
+            break;
+        }
+        if (DIRECT_FONT(uc))
+            uc &= 0xFF;
+#ifdef PLATFORM_IS_UTF16
+        if (uc >= 0x10000 && uc < 0x110000) {
+            text[n] = 0xD800 | ((uc - 0x10000) >> 10);
+            colof[n++] = x;
+            text[n] = 0xDC00 | ((uc - 0x10000) & 0x3FF);
+        } else
+#endif
+        {
+            text[n] = (uc < 0x110000 ? uc : 0xFFFD);
+        }
+        colof[n++] = x;
+    }
+    text[n] = 0;
+    colof[n] = ncols;
+    unlineptr(ldata);
+
+    *cols = colof;
+    *len = n;
+    return text;
+}
+
+/*
+ * Select from (x0,y0) up to but not including (x1,y1), as if the user
+ * had dragged over it (but without copying it), and scroll it into
+ * view if it isn't already.
+ */
+void term_select_range(Terminal *term, int y0, int x0, int y1, int x1)
+{
+    term->selstart.y = y0;
+    term->selstart.x = x0;
+    term->selend.y = y1;
+    term->selend.x = x1;
+    term->seltype = LEXICOGRAPHIC;
+    term->selmode = SM_CHAR;
+    term->selstate = SELECTED;
+    if (y0 < term->disptop || y1 >= term->disptop + term->rows)
+        term_scroll_to_selection(term, 0);
+    else
+        term_schedule_update(term);
+}
+
+/*
+ * Highlight these search results (one line each, in order), and the
+ * current one of them differently; or none, if n is 0.
+ */
+void term_set_highlights(Terminal *term, const TermHighlight *hl, size_t n,
+                         size_t current)
+{
+    sfree(term->hl);
+    term->hl = n ? snewn(n, TermHighlight) : NULL;
+    if (n)
+        memcpy(term->hl, hl, n * sizeof(*hl));
+    term->nhl = n;
+    term->hlcur = (current < n ? current : n);
+    term_schedule_update(term);
 }
 
 /*

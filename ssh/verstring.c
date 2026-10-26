@@ -8,6 +8,11 @@
 
 #include "putty.h"
 #include "ssh.h"
+
+/* (see ssh.h; here rather than in ssh.c, as the servers have this file
+ * and not that one, and never change them) */
+const char *ssh_client_name = "PuTTY";
+const char *ssh_client_version = NULL;
 #include "bpp.h"
 #include "sshcr.h"
 
@@ -172,7 +177,8 @@ static void ssh_verstring_send(struct ssh_verstring_state *s)
     s->our_vstring = dupprintf(
         "%.*s%s-%s%s",
         (int)s->prefix_wanted.len, (const char *)s->prefix_wanted.ptr,
-        s->our_protoversion, s->impl_name, sshver);
+        s->our_protoversion, s->impl_name,
+        ssh_client_version ? ssh_client_version : sshver);
     sv_pos = s->prefix_wanted.len + strlen(s->our_protoversion) + 1;
 
     /* Convert minus signs and spaces in the software version string

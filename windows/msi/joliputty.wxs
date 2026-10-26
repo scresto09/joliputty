@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    WiX source code for the JoliPuTTY installer (WiX 3.14 or later,
+    for arm64), adapted from PuTTY's own (windows/installer.wxs), whose
+    comments explain most of what's here.
+
+    Built by the build's "msi" target (see windows/CMakeLists.txt),
+    which defines on candle's command line:
+      RealPlatform   x64 or arm64, like jputty.exe
+      Builddir       where jputty.exe was built, with a trailing slash
+      Winver         JoliPuTTY's version, as four dotted numbers
+      Textver        and as people read it ("JoliPuTTY 0.1")
+      ManualFile     a link to the manual for this version, made by
+                     the build
+
+    It installs jputty.exe, the Windows App SDK bootstrapper DLL beside
+    it, and links to the manual and the web site, in its own directory
+    and Start menu folder, with its own identity (GUIDs, registry key),
+    so that it can be installed alongside PuTTY, without either
+    installer touching the other's files. The saved sessions, which
+    PuTTY and JoliPuTTY share, aren't the installer's business: they're
+    neither made nor removed by it.
+
+    It doesn't install the Windows App Runtime, which jputty.exe offers
+    to fetch when it isn't there (see wui_run in winui-host.cpp).
+-->
+
+<?if $(var.RealPlatform) = x64 ?>
+  <?define ProductNameSuffix = " (64-bit)" ?>
+  <?define UpgradeCode_GUID = "7BA9116E-A913-4F66-B070-394F9D2454FB" ?>
+  <?define JoliPuTTY_Component_GUID = "CA847EC7-DB4B-45D3-8DA5-C406D1DC1F19" ?>
+  <?define Bootstrap_Component_GUID = "3D418B71-BFDA-4434-97CA-F059BAF5B0AC" ?>
+  <?define Manual_Component_GUID = "4920E3EC-E24F-41CD-93C5-127614FF78F7" ?>
+  <?define Website_Component_GUID = "E006097A-7A39-4B65-B17A-A024941FE72B" ?>
+  <?define LICENCE_Component_GUID = "C282E231-8280-4E94-8962-B6603B3841BB" ?>
+  <?define README_Component_GUID = "6ABEDDBC-DB90-480E-9003-AB106CACD730" ?>
+  <?define Path_Component_GUID = "3D8F682B-0B94-43ED-90FD-6208749E8116" ?>
+  <?define ProgramMenuDir_GUID = "51B1A785-B96E-4D35-9DB2-A6A209F83718" ?>
+  <?define Desktop_Shortcut_Component_GUID = "3A9CF4BD-F492-4488-BD20-112D7AA9DBDD" ?>
+<?elseif $(var.RealPlatform) = arm64 ?>
+  <?define ProductNameSuffix = " (64-bit Arm)" ?>
+  <?define UpgradeCode_GUID = "A0203037-F324-4A1E-B20D-37024514EC8D" ?>
+  <?define JoliPuTTY_Component_GUID = "87621A91-F60A-4448-9522-5EE0E67C5F22" ?>
+  <?define Bootstrap_Component_GUID = "B6E838CE-7DFC-4764-82AD-E8BBCD3C6795" ?>
+  <?define Manual_Component_GUID = "E5237507-215B-4C12-AC70-61CF53AC4E02" ?>
+  <?define Website_Component_GUID = "5274D5CC-D6F8-4245-B834-26DD24C6B513" ?>
+  <?define LICENCE_Component_GUID = "DD489F94-B3BC-43C5-BEC3-B473CFC9C6DC" ?>
+  <?define README_Component_GUID = "9CFC2E35-ECB9-4ADA-B154-4A36B7AC7376" ?>
+  <?define Path_Component_GUID = "8E823B51-3563-427C-9BFB-41E39871F5AA" ?>
+  <?define ProgramMenuDir_GUID = "5E6D918D-23ED-458A-A48E-AA16A0DC5C43" ?>
+  <?define Desktop_Shortcut_Component_GUID = "161D19B2-0E27-48D6-8D6A-23FF633F5CBF" ?>
+<?else ?>
+  <?error JoliPuTTY is only built for x64 and arm64 ?>
+<?endif ?>
+
+<!-- (where the components' key paths go, as PuTTY's go under its own
+     key) -->
+<?define RegKeyPathLocation = "Software\SylvainCresto\JoliPuTTY" ?>
+<!-- (what jputty.exe sets at run time: get_app_user_model_id in
+     windows/putty.c) -->
+<?define AppUserModelId = "SylvainCresto.JoliPuTTY" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <Product
+      Name="$(var.Textver)$(var.ProductNameSuffix)"
+      Manufacturer="Sylvain Cresto"
+      Id="*"
+      UpgradeCode="$(var.UpgradeCode_GUID)"
+      Language="1033" Codepage="1252" Version="$(var.Winver)">
+
+    <Package Id="*" Keywords="Installer"
+             Description="$(var.Textver) installer"
+             Manufacturer="Sylvain Cresto"
+             InstallerVersion="500" Languages="1033"
+             Compressed="yes" SummaryCodepage="1252"
+             InstallScope="perMachine" />
+
+    <MajorUpgrade AllowDowngrades="yes" MigrateFeatures="yes" />
+    <Property Id="REINSTALLMODE" Value="amus"/>
+
+    <Media Id="1" Cabinet="joliputty.cab" EmbedCab="yes" />
+
+    <!-- (Windows 10 version 1809 or later, as the Windows App SDK
+         needs; VersionNT is 1000 for both 10 and 11, and the build
+         number tells them apart) -->
+    <Property Id="WINDOWSBUILDNUMBER" Secure="yes">
+      <RegistrySearch Id="WindowsBuildNumberSearch" Root="HKLM"
+                      Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+                      Name="CurrentBuildNumber" Type="raw" />
+    </Property>
+    <Condition Message="JoliPuTTY needs Windows 10 version 1809 or later (Windows 11 is recommended).">
+      <![CDATA[Installed OR (VersionNT >= 1000 AND WINDOWSBUILDNUMBER >= 17763)]]>
+    </Condition>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder" Name="PFiles">
+        <Directory Id="INSTALLDIR" Name="JoliPuTTY">
+
+          <Component Id="JoliPuTTY_Component"
+                     Guid="$(var.JoliPuTTY_Component_GUID)">
+            <File Id="JoliPuTTY_File"
+                  Source="$(var.Builddir)jputty.exe" KeyPath="yes">
+              <Shortcut Id="startmenuJoliPuTTY" Directory="ProgramMenuDir"
+                        WorkingDirectory="INSTALLDIR"
+                        Name="JoliPuTTY" Advertise="no">
+                <ShortcutProperty
+                    Key="{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5"
+                    Value="$(var.AppUserModelId)" />
+              </Shortcut>
+            </File>
+          </Component>
+          <!-- (which jputty.exe links to, to find the Windows App
+               Runtime) -->
+          <Component Id="Bootstrap_Component"
+                     Guid="$(var.Bootstrap_Component_GUID)">
+            <File Id="Bootstrap_File"
+                  Source="$(var.Builddir)Microsoft.WindowsAppRuntime.Bootstrap.dll"
+                  KeyPath="yes" />
+          </Component>
+
+          <!-- The manual is on the web site, a copy for each version
+               (see JOLIPUTTY_HELP in winui-window.c) -->
+          <Component Id="Manual_Component"
+                     Guid="$(var.Manual_Component_GUID)">
+            <File Id="Manual_File"
+                  Source="$(var.ManualFile)" Name="manual.url"
+                  KeyPath="yes">
+              <Shortcut Id="startmenuManual" Directory="ProgramMenuDir"
+                        Name="JoliPuTTY Manual"
+                        Advertise="no" />
+            </File>
+          </Component>
+          <Component Id="Website_Component"
+                     Guid="$(var.Website_Component_GUID)">
+            <File Id="Website_File"
+                  Source="website.url" KeyPath="yes">
+              <Shortcut Id="startmenuWebsite" Directory="ProgramMenuDir"
+                        Name="JoliPuTTY Web Site"
+                        Advertise="no" />
+            </File>
+          </Component>
+          <Component Id="LICENCE_Component"
+                     Guid="$(var.LICENCE_Component_GUID)">
+            <File Id="LICENCE_File"
+                  Source="../../LICENCE" KeyPath="yes" />
+          </Component>
+          <Component Id="README_Component"
+                     Guid="$(var.README_Component_GUID)">
+            <File Id="README_File"
+                  Source="README.txt" Name="README.txt" KeyPath="yes" />
+          </Component>
+
+          <!-- (so that "jputty host" works in a command prompt) -->
+          <Component Id="Path_Component"
+                     Guid="$(var.Path_Component_GUID)">
+            <Environment Id="Path_Environment"
+                         Name="PATH"
+                         Value="[INSTALLDIR]"
+                         Permanent="no"
+                         Part="last"
+                         Action="set"
+                         System="yes"/>
+            <RegistryValue Root="HKLM"
+                           Key="$(var.RegKeyPathLocation)\PathEntry"
+                           Type="string" Value="" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+        <Directory Id="ProgramMenuDir" Name="JoliPuTTY">
+          <Component Id="ProgramMenuDir"
+                     Guid="$(var.ProgramMenuDir_GUID)">
+            <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+            <RegistryValue Root="HKLM"
+                           Key="$(var.RegKeyPathLocation)\StartMenu"
+                           Type="string" Value="" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <Directory Id="DesktopFolder" Name="Desktop">
+        <Component Id="Desktop_Shortcut_Component"
+                   Guid="$(var.Desktop_Shortcut_Component_GUID)">
+          <Shortcut Id="DesktopJoliPuTTY"
+                    WorkingDirectory="INSTALLDIR"
+                    Target="[INSTALLDIR]jputty.exe"
+                    Name="JoliPuTTY" Advertise="no">
+            <ShortcutProperty
+                Key="{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5"
+                Value="$(var.AppUserModelId)" />
+          </Shortcut>
+          <RegistryValue Root="HKLM"
+                         Key="$(var.RegKeyPathLocation)\DesktopEntry"
+                         Type="string" Value="" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </Directory>
+
+    <Feature Id="FilesFeature" Level="1" Absent="disallow" AllowAdvertise="no"
+             Title="Install JoliPuTTY files">
+      <ComponentRef Id="JoliPuTTY_Component" />
+      <ComponentRef Id="Bootstrap_Component" />
+      <ComponentRef Id="Manual_Component" />
+      <ComponentRef Id="Website_Component" />
+      <ComponentRef Id="LICENCE_Component" />
+      <ComponentRef Id="README_Component" />
+      <ComponentRef Id="ProgramMenuDir" />
+    </Feature>
+    <Feature Id="DesktopFeature" Level="2" Absent="allow" AllowAdvertise="no"
+             Title="Add shortcut to JoliPuTTY on the Desktop">
+      <ComponentRef Id="Desktop_Shortcut_Component" />
+    </Feature>
+    <Feature Id="PathFeature" Level="1" Absent="allow" AllowAdvertise="no"
+             Title="Put install directory on the PATH for command prompts">
+      <ComponentRef Id="Path_Component" />
+    </Feature>
+
+    <!-- The user interface: PuTTY's sequence of WiX's standard
+         dialogs (see installer.wxs for why), with WiX's own artwork -->
+    <UIRef Id="WixUI_Common" />
+
+    <UI>
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Segoe UI" Size="9" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Segoe UI" Size="12" />
+      <TextStyle Id="WixUI_Font_Title" FaceName="Segoe UI" Size="9" Bold="yes" />
+
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+      <Property Id="WixUI_Mode" Value="InstallDir" />
+
+      <DialogRef Id="BrowseDlg" />
+      <DialogRef Id="DiskCostDlg" />
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="MsiRMFilesInUse" />
+      <DialogRef Id="PrepareDlg" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ResumeDlg" />
+      <DialogRef Id="UserExit" />
+      <DialogRef Id="FeaturesDlg" />
+
+      <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3">1</Publish>
+      <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+
+      <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="FeaturesDlg">Installed</Publish>
+
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="FeaturesDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+
+      <Publish Dialog="FeaturesDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">Installed</Publish>
+      <Publish Dialog="FeaturesDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+      <Publish Dialog="FeaturesDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1">NOT Installed</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">Installed AND PATCH</Publish>
+
+      <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+
+      <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+
+      <!-- (at the end, offer to start JoliPuTTY, rather than to show
+           the README as PuTTY's does) -->
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction"
+               Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+
+      <!-- (as PuTTY's: see installer.wxs) -->
+      <Property Id="ARPNOMODIFY" Value="1" />
+    </UI>
+
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT"
+              Value="Start JoliPuTTY" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WixShellExecTarget" Value="[#JoliPuTTY_File]" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA"
+                  DllEntry="WixShellExec" Impersonate="yes" />
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+
+    <!-- The icon in Installed apps, and the links there -->
+    <Icon Id="installericon.exe" SourceFile="../putty.ico" />
+    <Property Id="ARPPRODUCTICON" Value="installericon.exe" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/scresto09/joliputty/" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/scresto09/joliputty/issues" />
+
+  </Product>
+</Wix>

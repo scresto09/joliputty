@@ -1,0 +1,93 @@
+# JoliPuTTY's manual on its web site, for each release: when a
+# joliputty-X.Y tag is pushed, joliputty-help/make_help.sh makes it, and
+# it goes in X.Y/ on the gh-pages branch, which GitHub Pages serves at
+# https://scresto09.github.io/joliputty/ (where JoliPuTTY's Help looks
+# for it: see JOLIPUTTY_HELP in windows/winui/winui-window.c).
+#
+# The older versions' manuals stay there. latest/ is a copy of the
+# highest version's, for builds that aren't releases, and the site's
+# index.html goes to it.
+#
+# (GitHub Pages has to be set, once, to deploy from the gh-pages branch,
+# in the repository's Settings > Pages.)
+
+name: Manual
+
+on:
+  push:
+    tags: ['joliputty-*']
+  # (or by hand, on a tag, from the Actions tab)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# (one at a time, as each one pushes to gh-pages)
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  manual:
+    runs-on: ubuntu-latest
+    steps:
+      # (all of the history and tags, for git describe)
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Make the manual
+        run: sh joliputty-help/make_help.sh
+
+      - name: Check it's a release
+        run: |
+          version=$(cat joliputty-help/html/version)
+          case "$version" in
+            ''|*[!0-9.]*)
+              echo "::error::JoliPuTTY $version is not a release: run this on a joliputty-X.Y tag"
+              exit 1;;
+          esac
+          echo "version=$version" >> "$GITHUB_ENV"
+
+      - name: Put it on gh-pages
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch -q origin gh-pages
+            git worktree add -B gh-pages site origin/gh-pages
+          else
+            git worktree add --orphan -b gh-pages site
+          fi
+
+          cd site
+          rm -rf "$version"
+          cp -r "../joliputty-help/html/$version" "$version"
+          latest=$(ls -d [0-9]*/ | tr -d / | sort -V | tail -n 1)
+          rm -rf latest
+          cp -r "$latest" latest
+          cat > index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <title>JoliPuTTY's manual</title>
+          <meta http-equiv="refresh" content="0; url=latest/">
+          <link rel="canonical" href="latest/">
+          </head>
+          <body>
+          <p><a href="latest/">JoliPuTTY's manual</a></p>
+          </body>
+          </html>
+          EOF
+          # (the pages as they are, not through Jekyll)
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The manual for $version was already there"
+          else
+            git commit -q -m "Manual for JoliPuTTY $version"
+            git push -q origin gh-pages
+          fi

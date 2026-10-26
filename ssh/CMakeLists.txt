@@ -31,6 +31,7 @@ add_library(sshclient STATIC
   kex2-client.c
   mainchan.c
   sharing.c
+  sftpxfer.c
   ssh.c
   userauth2-client.c
   $<TARGET_OBJECTS:sshcommon>

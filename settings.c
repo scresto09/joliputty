@@ -629,6 +629,7 @@ void save_open_settings(settings_w *sesskey, Conf *conf)
 
     /* proxy settings */
     wmap(sesskey, "Environment", conf, CONF_environmt, true);
+    wmap(sesskey, "AutoLogon", conf, CONF_autologon, true);
 #ifndef NO_GSSAPI
     write_setting_b(sesskey, "GssapiFwd", conf_get_bool(conf, CONF_gssapifwd));
 #endif
@@ -879,6 +880,16 @@ void load_open_settings(settings_r *sesskey, Conf *conf)
     }
 
     gppmap(sesskey, "Environment", conf, CONF_environmt);
+    if (!gppmap(sesskey, "AutoLogon", conf, CONF_autologon)) {
+        /*
+         * By default, steps for the usual login and password prompts,
+         * ready for a user name and password to be filled in (until
+         * they are, they do nothing). The format is described in
+         * windows/winui/autologon.h.
+         */
+        conf_set_str_str(conf, CONF_autologon, "000", "\nogin:\n");
+        conf_set_str_str(conf, CONF_autologon, "001", "H\nassword:\n");
+    }
 #ifndef NO_GSSAPI
     gppb(sesskey, "GssapiFwd", false, conf, CONF_gssapifwd);
 #endif

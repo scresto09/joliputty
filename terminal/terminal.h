@@ -227,6 +227,14 @@ struct terminal_tag {
     } selmode;
     pos selstart, selend, selanchor;
 
+    /* Search results to highlight, in order; hlcur is the current one
+     * (or nhl, if none is) */
+    TermHighlight *hl;
+    size_t nhl, hlcur;
+
+    /* Where the remote shell says it is (see do_osc) */
+    char *remote_cwd;
+
     short wordness[256];
 
     /* Mask of attributes to pay attention to when painting. */

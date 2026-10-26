@@ -872,7 +872,7 @@ static char *connect_to_host(
     ssh->bpp = ssh_verstring_new(
         ssh->conf, ssh->logctx, ssh->bare_connection,
         ssh->version == 1 ? "1.5" : "2.0", &ssh->version_receiver,
-        false, "PuTTY");
+        false, ssh_client_name);
     ssh_connect_bpp(ssh);
     queue_idempotent_callback(&ssh->bpp->ic_in_raw);
 
@@ -1265,6 +1265,17 @@ static int ssh_cfg_info(Backend *be)
         return -1;
     else
         return ssh->version;
+}
+
+ConnectionLayer *ssh_get_connlayer(Backend *be)
+{
+    if (be->vt != &ssh_backend && be->vt != &sshconn_backend)
+        return NULL;
+    Ssh *ssh = container_of(be, Ssh, backend);
+    /* (once the main channel is ready, which is when it wants input) */
+    if (ssh->version != 2 || !ssh->cl || !ssh_get_wants_user_input(ssh->cl))
+        return NULL;
+    return ssh->cl;
 }
 
 /*

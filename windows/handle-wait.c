@@ -58,6 +58,9 @@ static int handlewait_cmp(void *av, void *bv)
 
 static tree234 *handlewaits_tree_real;
 
+static handle_wait_hook_fn_t hook_fn;
+static void *hook_ctx;
+
 static inline tree234 *ensure_handlewaits_tree_exists(void)
 {
     if (!handlewaits_tree_real)
@@ -98,12 +101,17 @@ HandleWait *add_handle_wait(HANDLE h, handle_wait_callback_fn_t callback,
     HandleWait *added = add234(t, hw);
     assert(added == hw);
 
+    if (hook_fn)
+        hook_fn(hook_ctx, hw, true);
+
     return hw;
 }
 
 void delete_handle_wait(HandleWait *hw)
 {
     tree234 *t = ensure_handlewaits_tree_exists();
+    if (hook_fn)
+        hook_fn(hook_ctx, hw, false);
     HandleWait *deleted = del234(t, hw);
     assert(deleted == hw);
     sfree(hw);
@@ -140,4 +148,27 @@ void handle_wait_list_free(HandleWaitList *hwl)
     struct HandleWaitListInner *hwli =
         container_of(hwl, struct HandleWaitListInner, hwl);
     sfree(hwli);
+}
+
+void handle_wait_set_hook(handle_wait_hook_fn_t fn, void *ctx)
+{
+    hook_fn = fn;
+    hook_ctx = ctx;
+
+    if (hook_fn) {
+        tree234 *t = ensure_handlewaits_tree_exists();
+        HandleWait *hw;
+        for (int i = 0; (hw = index234(t, i)) != NULL; i++)
+            hook_fn(hook_ctx, hw, true);
+    }
+}
+
+HANDLE handle_wait_get_handle(HandleWait *hw)
+{
+    return hw->handle;
+}
+
+void handle_wait_trigger(HandleWait *hw)
+{
+    hw->callback(hw->callback_ctx);
 }

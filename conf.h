@@ -448,6 +448,16 @@ CONF_OPTION(environmt,
     VALUE_TYPE(STR),  /* environment variable value */
     LOAD_CUSTOM, SAVE_CUSTOM, /* necessary for mappings */
 )
+CONF_OPTION(autologon,
+    /*
+     * The steps of Automate logon (in the WinUI front end, for SSH and
+     * Telnet): wait for some text, then send a command. The format
+     * is described in windows/winui/autologon.h.
+     */
+    SUBKEY_TYPE(STR),
+    VALUE_TYPE(STR),
+    LOAD_CUSTOM, SAVE_CUSTOM, /* necessary for mappings */
+)
 CONF_OPTION(username,
     VALUE_TYPE(STR_AMBI),
     DEFAULT_STR(""),
@@ -807,6 +817,27 @@ CONF_OPTION(bce,
     DEFAULT_BOOL(true),
     SAVE_KEYWORD("BCE"),
 )
+CONF_OPTION(no_wui_shortcuts,
+    /*
+     * In the WinUI front end: leave the keys of its own shortcuts
+     * (Ctrl+Alt+V, Ctrl+Alt+1 to 9, Alt+arrows, Alt+Shift+plus and
+     * minus, Ctrl+Shift+W, Ctrl+Shift+Space) to the server.
+     */
+    VALUE_TYPE(BOOL),
+    DEFAULT_BOOL(false),
+    SAVE_KEYWORD("NoWinUIShortcuts"),
+)
+CONF_OPTION(copy_pool_size,
+    /*
+     * In the WinUI front end: how much of what's copied in this session
+     * to keep in the pools of text to paste again (the tab's history,
+     * and the session's own pool), or 0 to keep none of it, for a
+     * session where what's copied is too secret for that.
+     */
+    VALUE_TYPE(INT),
+    DEFAULT_INT(20),
+    SAVE_KEYWORD("CopyPoolSize"),
+)
 CONF_OPTION(blinktext,
     VALUE_TYPE(BOOL),
     DEFAULT_BOOL(false),
@@ -963,7 +994,7 @@ CONF_OPTION(colours,
 /* Selection options */
 CONF_OPTION(mouse_is_xterm,
     VALUE_TYPE(INT),
-    DEFAULT_INT(0),
+    DEFAULT_INT(MOUSE_WINDOWS), /* right button brings up the menu */
     SAVE_KEYWORD("MouseIsXterm"),
     STORAGE_ENUM(mouse_buttons),
 )

@@ -10,14 +10,21 @@
 #include "putty.h"
 #include "putty-rc.h"
 
-#ifdef NO_HTMLHELP
+#if defined NO_HTMLHELP || defined PUTTY_WINUI
 
 /* If htmlhelp.h is not available, we can't do any of this at all */
+/* (Nor in the WinUI front end, which has no help file: its Help shows
+ * the manual on JoliPuTTY's web site instead, see wui_show_help. So
+ * there's no saying whether one's built in, either, as buildinfo
+ * would.) */
 bool has_help(void) { return false; }
 void init_help(void) { }
 void shutdown_help(void) { }
 void launch_help(HWND hwnd, const char *topic) { }
 void quit_help(HWND hwnd) { }
+#ifdef PUTTY_WINUI
+int has_embedded_chm(void) { return -1; }
+#endif
 
 #else
 

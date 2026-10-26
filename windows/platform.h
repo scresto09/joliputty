@@ -471,10 +471,55 @@ struct prefslist {
 };
 
 /*
+ * A front end that draws the portable dialog boxes itself, rather
+ * than with the Win32 controls in controls.c, provides one of these
+ * in its dlgparam, and the dlg_* functions in controls.c pass their
+ * calls on to it. (The rest of the dlg_* functions, such as dlg_end
+ * and dlg_coloursel_start, only touch the dlgparam, so they work for
+ * either kind of front end as they are.)
+ */
+typedef struct DlgFrontendVtable DlgFrontendVtable;
+struct DlgFrontendVtable {
+    bool (*is_visible)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*radiobutton_set)(dlgcontrol *ctrl, dlgparam *dp, int which);
+    int (*radiobutton_get)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*checkbox_set)(dlgcontrol *ctrl, dlgparam *dp, bool checked);
+    bool (*checkbox_get)(dlgcontrol *ctrl, dlgparam *dp);
+    /* For the edit box functions, 'utf8' says whether the text is in
+     * UTF-8 or the system code page */
+    void (*editbox_set)(dlgcontrol *ctrl, dlgparam *dp,
+                        const char *text, bool utf8);
+    char *(*editbox_get)(dlgcontrol *ctrl, dlgparam *dp, bool utf8);
+    void (*editbox_select_range)(dlgcontrol *ctrl, dlgparam *dp,
+                                 size_t start, size_t len);
+    void (*listbox_clear)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*listbox_del)(dlgcontrol *ctrl, dlgparam *dp, int index);
+    void (*listbox_addwithid)(dlgcontrol *ctrl, dlgparam *dp,
+                              const char *text, int id);
+    int (*listbox_getid)(dlgcontrol *ctrl, dlgparam *dp, int index);
+    int (*listbox_index)(dlgcontrol *ctrl, dlgparam *dp);
+    bool (*listbox_issel)(dlgcontrol *ctrl, dlgparam *dp, int index);
+    void (*listbox_select)(dlgcontrol *ctrl, dlgparam *dp, int index);
+    void (*text_set)(dlgcontrol *ctrl, dlgparam *dp, const char *text);
+    void (*label_change)(dlgcontrol *ctrl, dlgparam *dp, const char *text);
+    void (*filesel_set)(dlgcontrol *ctrl, dlgparam *dp, Filename *fn);
+    Filename *(*filesel_get)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*fontsel_set)(dlgcontrol *ctrl, dlgparam *dp, FontSpec *fs);
+    FontSpec *(*fontsel_get)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*set_focus)(dlgcontrol *ctrl, dlgparam *dp);
+    void (*refresh)(dlgcontrol *ctrl, dlgparam *dp);
+    /* (may be NULL, for a message box as the Win32 controls have) */
+    void (*error_msg)(dlgparam *dp, const char *msg);
+    /* The host CA box, over this one (may be NULL, for the Win32 one) */
+    void (*ca_config)(dlgparam *dp);
+};
+
+/*
  * This structure is passed to event handler functions as the `dlg'
  * parameter, and hence is passed back to winctrls access functions.
  */
 struct dlgparam {
+    const DlgFrontendVtable *fe;       /* NULL for the Win32 controls */
     HWND hwnd;                         /* the hwnd of the dialog box */
     struct winctrls *controltrees[8];  /* can have several of these */
     int nctrltrees;
@@ -635,8 +680,13 @@ void win_setup_config_box(struct controlbox *b, HWND *hwndp, bool has_help,
  */
 void defuse_showwindow(void);
 bool do_config(Conf *);
+/* (In the WinUI front end, instead: just note that it's wanted) */
+bool wui_defer_config(Conf *);
+/* (and for -cleanup, what it keeps outside the registry as well: the
+ * hidden commands of Automate logon, in the Credential Manager) */
+void wui_cleanup_all(void);
 bool do_reconfig(HWND, Conf *, int);
-void showeventlog(HWND);
+void showeventlog(LogPolicy *lp, HWND);
 void showabout(HWND);
 void force_normal(HWND hwnd);
 void modal_about_box(HWND hwnd);
@@ -731,6 +781,19 @@ typedef struct HandleWaitList {
 HandleWaitList *get_handle_wait_list(void);
 void handle_wait_activate(HandleWaitList *hwl, int index);
 void handle_wait_list_free(HandleWaitList *hwl);
+
+/*
+ * Alternative interface for event loops that don't own the message
+ * loop (e.g. the WinUI 3 front end), and so can't sit in
+ * MsgWaitForMultipleObjects. They register a hook that's told about
+ * every HandleWait as it's added or deleted (and, at registration
+ * time, about all existing ones), and arrange to wait for each handle
+ * by some other means.
+ */
+typedef void (*handle_wait_hook_fn_t)(void *ctx, HandleWait *hw, bool added);
+void handle_wait_set_hook(handle_wait_hook_fn_t fn, void *ctx);
+HANDLE handle_wait_get_handle(HandleWait *hw);
+void handle_wait_trigger(HandleWait *hw);
 
 /*
  * Pageant-related pathnames.

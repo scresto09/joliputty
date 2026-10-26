@@ -6,6 +6,16 @@ extern Filename *dialog_box_demo_screenshot_filename;
 static strbuf *demo_terminal_data = NULL;
 static Filename *terminal_demo_screenshot_filename;
 
+/*
+ * The config box for a command line that doesn't say what to connect
+ * to. The WinUI front end shows its own, once it's running.
+ */
+#ifdef PUTTY_WINUI
+#define STARTUP_CONFIG(conf) wui_defer_config(conf)
+#else
+#define STARTUP_CONFIG(conf) do_config(conf)
+#endif
+
 const unsigned cmdline_tooltype =
     TOOLTYPE_HOST_ARG |
     TOOLTYPE_PORT_ARG |
@@ -33,7 +43,7 @@ void gui_term_process_cmdline(Conf *conf, char *cmdline)
     p = handle_restrict_acl_cmdline_prefix(cmdline);
 
     if (handle_special_sessionname_cmdline(p, conf)) {
-        if (!conf_launchable(conf) && !do_config(conf)) {
+        if (!conf_launchable(conf) && !STARTUP_CONFIG(conf)) {
             cleanup_exit(0);
         }
         special_launchable_argument = true;
@@ -68,6 +78,20 @@ void gui_term_process_cmdline(Conf *conf, char *cmdline)
                  * and delete the random seed file.
                  */
                 char *s1, *s2;
+#ifdef PUTTY_WINUI
+                /* (and Automate logon's hidden commands: see
+                 * wui_cleanup_all) */
+                s1 = dupprintf("This procedure will remove ALL Registry entries\n"
+                               "associated with %s, and will also remove\n"
+                               "the random seed file and the hidden Automate\n"
+                               "logon commands in the Windows Credential\n"
+                               "Manager. (This only affects the\n"
+                               "currently logged-in user.)\n"
+                               "\n"
+                               "THIS PROCESS WILL DESTROY YOUR SAVED SESSIONS.\n"
+                               "Are you really sure you want to continue?",
+                               appname);
+#else
                 s1 = dupprintf("This procedure will remove ALL Registry entries\n"
                                "associated with %s, and will also remove\n"
                                "the random seed file. (This only affects the\n"
@@ -76,11 +100,15 @@ void gui_term_process_cmdline(Conf *conf, char *cmdline)
                                "THIS PROCESS WILL DESTROY YOUR SAVED SESSIONS.\n"
                                "Are you really sure you want to continue?",
                                appname);
+#endif
                 s2 = dupprintf("%s Warning", appname);
                 if (message_box(NULL, s1, s2,
                                 MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2,
                                 false, HELPCTXID(option_cleanup)) == IDYES) {
                     cleanup_all();
+#ifdef PUTTY_WINUI
+                    wui_cleanup_all();
+#endif
                 }
                 sfree(s1);
                 sfree(s2);
@@ -147,7 +175,7 @@ void gui_term_process_cmdline(Conf *conf, char *cmdline)
          * (explicitly) specified a launchable configuration.
          */
         if (!(special_launchable_argument || cmdline_host_ok(conf))) {
-            if (!do_config(conf))
+            if (!STARTUP_CONFIG(conf))
                 cleanup_exit(0);
         }
     }
@@ -179,7 +207,14 @@ const struct BackendVtable *backend_vt_from_conf(Conf *conf)
 
 const wchar_t *get_app_user_model_id(void)
 {
+#ifdef PUTTY_WINUI
+    /* (its own, so that Windows doesn't take it for PuTTY: on the
+     * taskbar, where windows with the same one share a button and an
+     * icon, and in the jump list) */
+    return L"SylvainCresto.JoliPuTTY";
+#else
     return L"SimonTatham.PuTTY";
+#endif
 }
 
 static void demo_terminal_screenshot(void *ctx, unsigned long now)

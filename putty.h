@@ -264,6 +264,8 @@ extern const int colour_indices_oscp_to_osc4[OSCP_NCOLOURS];
 #define ATTR_COLOURS 0x0003FFFFU
 #define ATTR_DIM     0x01000000U
 #define ATTR_STRIKE  0x02000000U
+#define ATTR_FOUND   0x04000000U       /* highlighted by a search */
+#define ATTR_FOUNDCUR 0x08000000U      /* the current one of those */
 #define ATTR_ACTCURS 0x40000000UL      /* active cursor (block) */
 #define ATTR_PASCURS 0x20000000UL      /* passive cursor (box) */
 #define ATTR_RIGHTCURS 0x10000000UL    /* cursor-on-RHS */
@@ -2019,6 +2021,17 @@ void term_resize_request_completed(Terminal *);
 void term_paint(Terminal *, int, int, int, int, bool);
 void term_scroll(Terminal *, int, int);
 void term_scroll_to_selection(Terminal *, int);
+int term_first_line(Terminal *);
+wchar_t *term_line_text(Terminal *, int y, int **cols, size_t *len);
+void term_select_range(Terminal *, int y0, int x0, int y1, int x1);
+typedef struct TermHighlight {
+    int y, x0, x1;                     /* x1 is just after it */
+} TermHighlight;
+void term_set_highlights(Terminal *, const TermHighlight *, size_t n,
+                         size_t current);
+/* The directory the remote shell last said it was in (by OSC 7 or
+ * OSC 9;9), as it sent it, or NULL */
+const char *term_remote_cwd(Terminal *);
 void term_pwron(Terminal *, bool);
 void term_clrsb(Terminal *);
 void term_mouse(Terminal *, Mouse_Button, Mouse_Button, Mouse_Action,
@@ -2197,6 +2210,43 @@ extern const struct BackendVtable telnet_backend;
  * Exports from ssh/ssh.c.
  */
 extern const struct BackendVtable ssh_backend;
+
+/*
+ * Exports from ssh/sftpxfer.c: transferring files by SFTP over a
+ * channel of its own in a running SSH-2 session. Each job calls
+ * 'done' once (unless cancelled first), after which it's gone. The
+ * text it gets is, if all went well: for finding the home directory,
+ * that; for listing a directory, which one that was (after the
+ * 'entry' calls for what's in it); for checking a file or receiving
+ * it, where it is; for sending one, where it went. If it's already
+ * there (when sending without 'overwrite'), it's where it would have
+ * gone. Otherwise it's what went wrong.
+ *
+ * Remote paths may start with ~, or be relative to the home
+ * directory. Jobs given a FILE close it when they're done with it.
+ */
+typedef struct SftpXfer SftpXfer;
+typedef enum SftpXferResult {
+    SFTP_XFER_OK, SFTP_XFER_EXISTS, SFTP_XFER_FAILED
+} SftpXferResult;
+typedef struct SftpXferClient {
+    void (*progress)(void *ctx, uint64_t sofar, uint64_t total);
+    void (*entry)(void *ctx, const char *name, bool is_dir);
+    void (*done)(void *ctx, SftpXferResult result, const char *text);
+} SftpXferClient;
+bool sftp_xfer_available(Backend *be);
+SftpXfer *sftp_xfer_home(Backend *be, const SftpXferClient *client,
+                         void *ctx);
+SftpXfer *sftp_xfer_list(Backend *be, const SftpXferClient *client,
+                         void *ctx, const char *dir);
+SftpXfer *sftp_xfer_check(Backend *be, const SftpXferClient *client,
+                          void *ctx, const char *path);
+SftpXfer *sftp_xfer_send(Backend *be, const SftpXferClient *client,
+                         void *ctx, const char *dir, const char *name,
+                         FILE *fp, uint64_t size, bool overwrite);
+SftpXfer *sftp_xfer_receive(Backend *be, const SftpXferClient *client,
+                            void *ctx, const char *path, FILE *fp);
+void sftp_xfer_cancel(SftpXfer *x);
 extern const struct BackendVtable sshconn_backend;
 
 /*
@@ -2507,6 +2557,8 @@ extern const struct conf_editbox_handler_type conf_editbox_int;
 #define ED_STR CP(&conf_editbox_str)
 #define ED_INT CP(&conf_editbox_int)
 
+void setup_config_box_dest(struct controlbox *b, bool midsession,
+                           int protocol, int protcfginfo, bool destination);
 void setup_config_box(struct controlbox *b, bool midsession,
                       int protocol, int protcfginfo);
 

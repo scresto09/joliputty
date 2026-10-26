@@ -2259,7 +2259,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
             }
             break;
           case IDM_SHOWLOG:
-            showeventlog(hwnd);
+            showeventlog(&wgs->logpolicy, hwnd);
             break;
           case IDM_NEWSESS:
           case IDM_DUPSESS:

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Manifest of the MSIX package of JoliPuTTY (jputty.exe), which needs no
+  installer.
+
+  make_msix.ps1 fills the placeholders:
+    @NAME@               identity name (reserved in Partner Center for the
+                         Microsoft Store)
+    @PUBLISHER@          subject of the certificate used to sign the package
+                         (for the Store: the publisher ID of the account)
+    @PUBLISHERNAME@      publisher display name
+    @VERSION@            JoliPuTTY's version, as major.minor.build.0
+    @ARCH@               x64 or arm64, like jputty.exe
+    @DEPENDENCIES@       the Windows App Runtime jputty.exe was built with
+
+  The logos have variants for each scale and size in msix\Assets (made from
+  putty.ico by mkassets.py): make_msix.ps1 indexes them in resources.pri.
+  The display name "JoliPuTTY" is not translated: for the Store it must be
+  the reserved name.
+
+  The registry isn't virtualized, so that the saved sessions are where PuTTY
+  keeps them (HKCU\Software\SimonTatham\PuTTY), shared with PuTTY and
+  PuTTY-ng, and kept when the package is removed, as they are when PuTTY is
+  uninstalled.  This takes the restricted capability unvirtualizedResources,
+  which the Store asks to justify.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  IgnorableNamespaces="uap uap5 rescap desktop6">
+  <Identity Name="@NAME@" ProcessorArchitecture="@ARCH@"
+            Publisher="@PUBLISHER@" Version="@VERSION@" />
+  <Properties>
+    <DisplayName>JoliPuTTY</DisplayName>
+    <PublisherDisplayName>@PUBLISHERNAME@</PublisherDisplayName>
+    <Logo>msix\StoreLogo.png</Logo>
+    <Description>A playful fork of PuTTY, the SSH and Telnet client, for Windows 11, with a WinUI 3 look.</Description>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0"
+                        MaxVersionTested="10.0.26100.0" />@DEPENDENCIES@
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+  <Applications>
+    <Application Id="jputty" Executable="jputty.exe"
+                 EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="JoliPuTTY"
+                          Description="SSH and Telnet client"
+                          BackgroundColor="transparent"
+                          Square150x150Logo="msix\JoliPuTTY150x150Logo.png"
+                          Square44x44Logo="msix\JoliPuTTY44x44Logo.png" />
+      <Extensions>
+        <!-- "jputty" in a command prompt (with PuTTY's command line:
+             "jputty user@host", "jputty -load session"...), instead of
+             adding the directory to PATH. -->
+        <uap5:Extension Category="windows.appExecutionAlias">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="jputty.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

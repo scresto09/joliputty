@@ -1783,6 +1783,20 @@ static void host_ca_button_handler(dlgcontrol *ctrl, dlgparam *dp,
 void setup_config_box(struct controlbox *b, bool midsession,
                       int protocol, int protcfginfo)
 {
+    setup_config_box_dest(b, midsession, protocol, protcfginfo,
+                          !midsession);
+}
+
+/*
+ * As setup_config_box, but saying whether to have the host name, port
+ * and connection type ('destination'), which normally aren't there
+ * mid-session, as changing them can't change where the session's
+ * connected to. (A front end that can save the settings, or restart
+ * the session, from its Change Settings may want them anyway.)
+ */
+void setup_config_box_dest(struct controlbox *b, bool midsession,
+                           int protocol, int protcfginfo, bool destination)
+{
     const struct BackendVtable *backvt;
     struct controlset *s;
     struct sessionsaver_data *ssd;
@@ -1830,7 +1844,7 @@ void setup_config_box(struct controlbox *b, bool midsession,
     ctrl_settitle(b, "Session", str);
     sfree(str);
 
-    if (!midsession) {
+    if (destination) {
         struct hostport *hp = (struct hostport *)
             ctrl_alloc(b, sizeof(struct hostport));
         memset(hp, 0, sizeof(*hp));

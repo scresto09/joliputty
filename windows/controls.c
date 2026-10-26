@@ -2133,6 +2133,21 @@ bool winctrl_context_help(struct dlgparam *dp, HWND hwnd, int id)
  * mechanism can call to access the dialog box entries.
  */
 
+/*
+ * If another front end is drawing this dialog box (see
+ * DlgFrontendVtable), hand the call over to it.
+ */
+#define FE_CALL(fn, ...) do {                   \
+        if (dp->fe) {                           \
+            dp->fe->fn(__VA_ARGS__);            \
+            return;                             \
+        }                                       \
+    } while (0)
+#define FE_RETURN(fn, ...) do {                 \
+        if (dp->fe)                             \
+            return dp->fe->fn(__VA_ARGS__);     \
+    } while (0)
+
 static struct winctrl *dlg_findbyctrl(struct dlgparam *dp, dlgcontrol *ctrl)
 {
     int i;
@@ -2147,6 +2162,7 @@ static struct winctrl *dlg_findbyctrl(struct dlgparam *dp, dlgcontrol *ctrl)
 
 bool dlg_is_visible(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(is_visible, ctrl, dp);
     /*
      * In this implementation of the dialog box, we physically
      * uncreate controls that aren't in a visible panel of the config
@@ -2158,6 +2174,7 @@ bool dlg_is_visible(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_radiobutton_set(dlgcontrol *ctrl, dlgparam *dp, int whichbutton)
 {
+    FE_CALL(radiobutton_set, ctrl, dp, whichbutton);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_RADIO);
     CheckRadioButton(dp->hwnd,
@@ -2168,6 +2185,7 @@ void dlg_radiobutton_set(dlgcontrol *ctrl, dlgparam *dp, int whichbutton)
 
 int dlg_radiobutton_get(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(radiobutton_get, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int i;
     assert(c && c->ctrl->type == CTRL_RADIO);
@@ -2179,6 +2197,7 @@ int dlg_radiobutton_get(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_checkbox_set(dlgcontrol *ctrl, dlgparam *dp, bool checked)
 {
+    FE_CALL(checkbox_set, ctrl, dp, checked);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_CHECKBOX);
     CheckDlgButton(dp->hwnd, c->base_id, checked);
@@ -2186,6 +2205,7 @@ void dlg_checkbox_set(dlgcontrol *ctrl, dlgparam *dp, bool checked)
 
 bool dlg_checkbox_get(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(checkbox_get, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_CHECKBOX);
     return 0 != IsDlgButtonChecked(dp->hwnd, c->base_id);
@@ -2193,6 +2213,7 @@ bool dlg_checkbox_get(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_editbox_set(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 {
+    FE_CALL(editbox_set, ctrl, dp, text, false);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_EDITBOX);
     SetDlgItemText(dp->hwnd, c->base_id+1, text);
@@ -2200,6 +2221,7 @@ void dlg_editbox_set(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 
 void dlg_editbox_set_utf8(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 {
+    FE_CALL(editbox_set, ctrl, dp, text, true);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_EDITBOX);
     wchar_t *wtext = dup_mb_to_wc(CP_UTF8, text);
@@ -2209,6 +2231,7 @@ void dlg_editbox_set_utf8(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 
 char *dlg_editbox_get(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(editbox_get, ctrl, dp, false);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_EDITBOX);
     return GetDlgItemText_alloc(dp->hwnd, c->base_id+1);
@@ -2216,6 +2239,7 @@ char *dlg_editbox_get(dlgcontrol *ctrl, dlgparam *dp)
 
 char *dlg_editbox_get_utf8(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(editbox_get, ctrl, dp, true);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_EDITBOX);
     wchar_t *wtext = GetDlgItemTextW_alloc(dp->hwnd, c->base_id+1);
@@ -2227,6 +2251,7 @@ char *dlg_editbox_get_utf8(dlgcontrol *ctrl, dlgparam *dp)
 void dlg_editbox_select_range(dlgcontrol *ctrl, dlgparam *dp,
                               size_t start, size_t len)
 {
+    FE_CALL(editbox_select_range, ctrl, dp, start, len);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_EDITBOX);
     SendDlgItemMessage(dp->hwnd, c->base_id+1, EM_SETSEL, start, start+len);
@@ -2235,6 +2260,7 @@ void dlg_editbox_select_range(dlgcontrol *ctrl, dlgparam *dp,
 /* The `listbox' functions can also apply to combo boxes. */
 void dlg_listbox_clear(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_CALL(listbox_clear, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg;
     assert(c &&
@@ -2248,6 +2274,7 @@ void dlg_listbox_clear(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_listbox_del(dlgcontrol *ctrl, dlgparam *dp, int index)
 {
+    FE_CALL(listbox_del, ctrl, dp, index);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg;
     assert(c &&
@@ -2261,6 +2288,7 @@ void dlg_listbox_del(dlgcontrol *ctrl, dlgparam *dp, int index)
 
 void dlg_listbox_add(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 {
+    FE_CALL(listbox_addwithid, ctrl, dp, text, 0);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg;
     assert(c &&
@@ -2282,6 +2310,7 @@ void dlg_listbox_add(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 void dlg_listbox_addwithid(dlgcontrol *ctrl, dlgparam *dp,
                            char const *text, int id)
 {
+    FE_CALL(listbox_addwithid, ctrl, dp, text, id);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg, msg2, index;
     assert(c &&
@@ -2298,6 +2327,7 @@ void dlg_listbox_addwithid(dlgcontrol *ctrl, dlgparam *dp,
 
 int dlg_listbox_getid(dlgcontrol *ctrl, dlgparam *dp, int index)
 {
+    FE_RETURN(listbox_getid, ctrl, dp, index);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg;
     assert(c && c->ctrl->type == CTRL_LISTBOX);
@@ -2309,6 +2339,7 @@ int dlg_listbox_getid(dlgcontrol *ctrl, dlgparam *dp, int index)
 /* dlg_listbox_index returns <0 if no single element is selected. */
 int dlg_listbox_index(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(listbox_index, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg, ret;
     assert(c && c->ctrl->type == CTRL_LISTBOX);
@@ -2328,6 +2359,7 @@ int dlg_listbox_index(dlgcontrol *ctrl, dlgparam *dp)
 
 bool dlg_listbox_issel(dlgcontrol *ctrl, dlgparam *dp, int index)
 {
+    FE_RETURN(listbox_issel, ctrl, dp, index);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_LISTBOX &&
            c->ctrl->listbox.multisel &&
@@ -2338,6 +2370,7 @@ bool dlg_listbox_issel(dlgcontrol *ctrl, dlgparam *dp, int index)
 
 void dlg_listbox_select(dlgcontrol *ctrl, dlgparam *dp, int index)
 {
+    FE_CALL(listbox_select, ctrl, dp, index);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int msg;
     assert(c && c->ctrl->type == CTRL_LISTBOX &&
@@ -2348,6 +2381,7 @@ void dlg_listbox_select(dlgcontrol *ctrl, dlgparam *dp, int index)
 
 void dlg_text_set(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 {
+    FE_CALL(text_set, ctrl, dp, text);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_TEXT);
     SetDlgItemText(dp->hwnd, c->base_id, text);
@@ -2355,6 +2389,7 @@ void dlg_text_set(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 
 void dlg_label_change(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 {
+    FE_CALL(label_change, ctrl, dp, text);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     char *escaped = NULL;
     int id = -1;
@@ -2403,6 +2438,7 @@ void dlg_label_change(dlgcontrol *ctrl, dlgparam *dp, char const *text)
 
 void dlg_filesel_set(dlgcontrol *ctrl, dlgparam *dp, Filename *fn)
 {
+    FE_CALL(filesel_set, ctrl, dp, fn);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c);
     assert(c->ctrl->type == CTRL_FILESELECT);
@@ -2412,6 +2448,7 @@ void dlg_filesel_set(dlgcontrol *ctrl, dlgparam *dp, Filename *fn)
 
 Filename *dlg_filesel_get(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(filesel_get, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c);
     assert(c->ctrl->type == CTRL_FILESELECT);
@@ -2427,6 +2464,7 @@ Filename *dlg_filesel_get(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_fontsel_set(dlgcontrol *ctrl, dlgparam *dp, FontSpec *fs)
 {
+    FE_CALL(fontsel_set, ctrl, dp, fs);
     char *buf, *boldstr;
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_FONTSELECT);
@@ -2449,6 +2487,7 @@ void dlg_fontsel_set(dlgcontrol *ctrl, dlgparam *dp, FontSpec *fs)
 
 FontSpec *dlg_fontsel_get(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_RETURN(fontsel_get, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     assert(c && c->ctrl->type == CTRL_FONTSELECT);
     return fontspec_copy((FontSpec *)c->data);
@@ -2461,6 +2500,8 @@ FontSpec *dlg_fontsel_get(dlgcontrol *ctrl, dlgparam *dp)
  */
 void dlg_update_start(dlgcontrol *ctrl, dlgparam *dp)
 {
+    if (dp->fe)
+        return;                        /* nothing to do there */
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     if (c && c->ctrl->type == CTRL_LISTBOX) {
         SendDlgItemMessage(dp->hwnd, c->base_id+1, WM_SETREDRAW, false, 0);
@@ -2469,6 +2510,8 @@ void dlg_update_start(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_update_done(dlgcontrol *ctrl, dlgparam *dp)
 {
+    if (dp->fe)
+        return;
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     if (c && c->ctrl->type == CTRL_LISTBOX) {
         HWND hw = GetDlgItem(dp->hwnd, c->base_id+1);
@@ -2479,6 +2522,7 @@ void dlg_update_done(dlgcontrol *ctrl, dlgparam *dp)
 
 void dlg_set_focus(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_CALL(set_focus, ctrl, dp);
     struct winctrl *c = dlg_findbyctrl(dp, ctrl);
     int id;
     HWND ctl;
@@ -2519,6 +2563,10 @@ void dlg_beep(dlgparam *dp)
 
 void dlg_error_msg(dlgparam *dp, const char *msg)
 {
+    if (dp->fe && dp->fe->error_msg) {
+        dp->fe->error_msg(dp, msg);
+        return;
+    }
     MessageBox(dp->hwnd, msg,
                dp->errtitle ? dp->errtitle : NULL,
                MB_OK | MB_ICONERROR);
@@ -2537,6 +2585,7 @@ void dlg_end(dlgparam *dp, int value)
 
 void dlg_refresh(dlgcontrol *ctrl, dlgparam *dp)
 {
+    FE_CALL(refresh, ctrl, dp);
     int i, j;
     struct winctrl *c;
 
@@ -2637,6 +2686,7 @@ void dlg_set_fixed_pitch_flag(dlgparam *dp, bool flag)
 
 void dp_init(struct dlgparam *dp)
 {
+    dp->fe = NULL;
     dp->nctrltrees = 0;
     dp->data = NULL;
     dp->ended = false;

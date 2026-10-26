@@ -1,0 +1,78 @@
+\H{privacy-joliputty} JoliPuTTY
+
+JoliPuTTY is one of those modified versions. What this appendix says
+about PuTTY is true of JoliPuTTY too, which changes nothing in the way
+PuTTY connects to servers; but JoliPuTTY stores a little more on your
+computer, and in a few cases makes a connection of its own, as
+described here. Like PuTTY, JoliPuTTY never \q{phones home}: neither
+its author nor anyone else collects any information about you or your
+sessions.
+
+\S{privacy-jp-local} What JoliPuTTY stores locally
+
+Along with PuTTY's own data, JoliPuTTY stores, in the registry, under
+PuTTY's key (in \cw{WinUI}):
+
+\b which saved sessions are your favorites, and when you last used
+each of them (for the Recent section of the Sessions page);
+
+\b the folders you've made that are still empty, and which sections
+and folders of the Sessions page you've folded away;
+
+\b the application theme.
+
+\S{privacy-jp-pools} Pools of copied text
+
+Text that you keep, with \q{Copy to Pool}, for a saved session or for
+all sessions (see \k{jp-pools}) is stored in the registry, encrypted
+for your Windows account with Windows' Data Protection API, so that
+other users of the computer can't read it. Anything running under your
+own account can, though, as it can read anything else you can.
+
+Everything you copy also goes in the tab's history, which is only kept
+in memory, and forgotten when the tab is closed. To keep nothing at
+all, set \q{Copies to keep} to 0 on the Terminal page of the session's
+settings.
+
+\S{privacy-jp-autologon} Automate logon
+
+The commands of Automate logon (\k{jp-autologon}) are saved with the
+rest of the session's settings, in the registry, in clear, unless they
+are hidden: hidden commands (passwords, mostly) are kept in the
+Windows Credential Manager instead, under names starting
+\cq{PuTTY Automate logon/}. Think twice before putting a password in
+a command, hidden or not: anyone who can use your Windows account can
+get it back.
+
+\S{privacy-jp-cleanup} Deleting it all
+
+The \c{\-cleanup} command-line option (\k{using-cleanup}) deletes all
+of JoliPuTTY's data in the registry along with PuTTY's, including the
+pools of copied text, and the hidden commands of Automate logon from
+the Windows Credential Manager.
+
+If you installed JoliPuTTY as an MSIX package, uninstalling it removes
+the program, but not your saved sessions, which are where PuTTY keeps
+them, so that PuTTY can still use them.
+
+\S{privacy-jp-network} Network connections
+
+JoliPuTTY only connects where PuTTY would, with these additions:
+
+\b If the Windows App Runtime that JoliPuTTY needs isn't installed,
+JoliPuTTY offers to open Microsoft's web page to download it. It only
+does so if you agree.
+
+\b The \q{Web site} link of the About box opens JoliPuTTY's web page,
+in your browser, when you click it.
+
+\b \q{Send File} and \q{Receive File} (\k{jp-termmenu}) transfer files
+over the SSH connection that's already open to the server, and
+nowhere else.
+
+\b If you installed JoliPuTTY from the Microsoft Store, the Store
+keeps it up to date, as it does for its other applications.
+
+When it connects to an SSH server, JoliPuTTY tells it its name and
+version (\cw{JoliPuTTY_0.1}) instead of PuTTY's, as every SSH client
+tells servers its own.

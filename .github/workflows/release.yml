@@ -1,0 +1,115 @@
+# JoliPuTTY's packages, for each release: when a joliputty-X.Y tag is
+# pushed, jputty.exe is built for x64 and arm64 (cross-compiled, on an
+# x64 runner), packaged as an MSI (windows/msi) and an MSIX
+# (windows/msix), and all of them go in the GitHub Release of that tag
+# (made if it isn't there yet, or updated).
+#
+# None is signed: the MSIX is for the Microsoft Store, which signs it.
+
+name: Release
+
+on:
+  push:
+    tags: ['joliputty-*']
+  # (or by hand, on a tag, from the Actions tab)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  packages:
+    runs-on: windows-latest
+    strategy:
+      # (each to the end, to see what fails in both)
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+    env:
+      wix_url: https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+    steps:
+      # (all of the history and tags, for git describe)
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # WiX 3.14, for the MSI (not on the runner any more), given to
+      # cmake below, in wix_dir (wherever candle.exe is in the zip)
+      - name: Get WiX
+        shell: pwsh
+        run: |
+          $wix = "$env:RUNNER_TEMP\wix"
+          Invoke-WebRequest $env:wix_url -OutFile "$wix.zip"
+          Expand-Archive "$wix.zip" $wix
+          $candle = Get-ChildItem $wix -Recurse -Filter candle.exe | Select-Object -First 1
+          if (-not $candle -or -not (Test-Path "$($candle.DirectoryName)\light.exe")) {
+            Write-Output "::error::No candle.exe and light.exe in $env:wix_url"
+            exit 1
+          }
+          Write-Output "WiX in $($candle.DirectoryName)"
+          Add-Content $env:GITHUB_ENV "wix_dir=$($candle.DirectoryName)"
+
+      # (what cmake/joliputty-version.cmake will see, for when it isn't
+      # a release: the tag, and anything that would make it -dirty)
+      - name: Version
+        run: |
+          git describe --tags --match "joliputty-*" --dirty
+          git status --short
+
+      # (in build, so that the source stays as checked out, not dirty)
+      - name: Configure
+        run: |
+          cmake -S . -B build -A ${{ matrix.arch == 'arm64' && 'ARM64' || 'x64' }} `
+            "-DWIX_CANDLE=$env:wix_dir\candle.exe" "-DWIX_LIGHT=$env:wix_dir\light.exe"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      # (each command checked: only the last one's failure would
+      # otherwise fail the step)
+      - name: Build the packages
+        run: |
+          cmake --build build --config Release --target msi
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          cmake --build build --config Release --target msix
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Check it's a release
+        shell: pwsh
+        run: |
+          $h = Get-Content build\CMakeFiles\joliputty-version.h
+          $version = ($h | Select-String '^#define JOLIPUTTY_VERSION "(.*)"').Matches[0].Groups[1].Value
+          if (-not ($h | Select-String '^#define JOLIPUTTY_RELEASE 1')) {
+            Write-Output "::error::JoliPuTTY $version is not a release: run this on a joliputty-X.Y tag"
+            exit 1
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.arch }}
+          path: |
+            build/JoliPuTTY_*.msi
+            build/JoliPuTTY_*.msix
+          if-no-files-found: error
+
+  # (once both are made, so that only one job makes the release)
+  release:
+    needs: packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          merge-multiple: true
+          path: packages
+
+      - name: Put them in the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+        run: |
+          version=${tag#joliputty-}
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --verify-tag --title "JoliPuTTY $version" \
+              --notes "Manual: https://scresto09.github.io/joliputty/$version/"
+          fi
+          gh release upload "$tag" packages/* --clobber
