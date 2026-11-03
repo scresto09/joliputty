@@ -17,20 +17,13 @@
   putty.ico by mkassets.py): make_msix.ps1 indexes them in resources.pri.
   The display name "JoliPuTTY" is not translated: for the Store it must be
   the reserved name.
-
-  The registry isn't virtualized, so that the saved sessions are where PuTTY
-  keeps them (HKCU\Software\SimonTatham\PuTTY), shared with PuTTY and
-  PuTTY-ng, and kept when the package is removed, as they are when PuTTY is
-  uninstalled.  This takes the restricted capability unvirtualizedResources,
-  which the Store asks to justify.
 -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
-  IgnorableNamespaces="uap uap5 rescap desktop6">
+  IgnorableNamespaces="uap uap5 rescap">
   <Identity Name="@NAME@" ProcessorArchitecture="@ARCH@"
             Publisher="@PUBLISHER@" Version="@VERSION@" />
   <Properties>
@@ -38,7 +31,6 @@
     <PublisherDisplayName>@PUBLISHERNAME@</PublisherDisplayName>
     <Logo>msix\StoreLogo.png</Logo>
     <Description>A playful fork of PuTTY, the SSH and Telnet client, for Windows 11, with a WinUI 3 look.</Description>
-    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
   </Properties>
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0"
@@ -49,7 +41,6 @@
   </Resources>
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="unvirtualizedResources" />
   </Capabilities>
   <Applications>
     <Application Id="jputty" Executable="jputty.exe"

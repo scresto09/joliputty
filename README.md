@@ -23,7 +23,7 @@ For issues, please visit <https://github.com/scresto09/joliputty/issues>
 
 The original PuTTY README has been renamed to [README.PuTTY](README.PuTTY).
 
-All of this is Windows-only, in the WinUI 3 front end in `windows/winui`:
+All of this is Windows-only:
 
 - **Tabs in the title bar**, with a per-tab right-click menu (New tab,
   Rename tab, Duplicate, Restart session, Close…), and **split panes**
@@ -70,9 +70,7 @@ PuTTY-ng can still use them. PuTTYtel, pterm and the command-line tools
 - **Internet access** for the first CMake run, which downloads the Windows
   App SDK and C++/WinRT NuGet packages into the build directory.
 - At **runtime**, the **Windows App Runtime** must be installed on the
-  machine (JoliPuTTY offers to download it if it's missing), and
-  `Microsoft.WindowsAppRuntime.Bootstrap.dll` must be next to the
-  executable (the build copies it there).
+  machine (JoliPuTTY offers to download it if it's missing).
 
 ---
 
@@ -92,13 +90,8 @@ version can be changed with `-DPUTTY_WINAPPSDK_VERSION=<version>` (see
 
 ### Manual
 
-The online manual is PuTTY's, with JoliPuTTY's own chapter and notes,
-made by `joliputty-help/make_help.sh` (with Halibut, which it fetches and
-builds if it isn't installed) in `joliputty-help/html/<version>/`. When a
-`joliputty-X.Y` tag is pushed to GitHub, `.github/workflows/help.yml`
-makes it and puts it on the web site, at
-<https://scresto09.github.io/joliputty/X.Y/>, where that version's Help
-looks for it; builds that aren't releases use `latest/`.
+The online manual is PuTTY's, with JoliPuTTY's own chapter and notes:
+<https://scresto09.github.io/joliputty/latest/>
 
 ### MSI installer
 
@@ -115,7 +108,7 @@ This needs [WiX Toolset](https://wixtoolset.org/) 3.14 or later (on the
 `JoliPuTTY_<version>_<arch>.msi`. It can be installed alongside PuTTY:
 it has its own identity, and leaves the saved sessions alone. It
 doesn't install the Windows App Runtime, which JoliPuTTY offers to
-download when it's missing. See `windows/msi/joliputty.wxs`.
+download when it's missing.
 
 ### MSIX package
 
@@ -127,13 +120,9 @@ cmake --build . --config Release --target msix
 ```
 
 This needs `makeappx.exe` and `makepri.exe` from the Windows SDK and creates
-the unsigned `JoliPuTTY_<version>_<arch>.msix`. The Store signs it. The
-package identity defaults to `SylvainCresto.JoliPuTTY`, with the publisher
-of the Partner Center account; override it by running
-`windows\msix\make_msix.ps1` by hand with `-Name`, `-Publisher` and
-`-PublisherName` (e.g. for a self-signed test build, set `-Publisher` to the
-test certificate's subject). To test it without signing, enable the
-Developer Mode and register the staging directory:
+the unsigned `JoliPuTTY_<version>_<arch>.msix`. The Store signs it. To test
+it without signing, enable the Developer Mode and register the staging
+directory:
 
 ```
 Add-AppxPackage -Register msix\staging\AppxManifest.xml
@@ -141,9 +130,8 @@ Add-AppxPackage -Register msix\staging\AppxManifest.xml
 
 `jputty` is then available in a command prompt. The package depends on the
 Windows App Runtime used for building: the Store installs it, otherwise it
-must already be installed. The saved sessions stay where PuTTY keeps them
-in the registry, shared with PuTTY. The logos in `windows/msix/Assets` are
-made from `windows/putty.ico` by `windows/msix/mkassets.py`.
+must already be installed. Changes to the saved sessions stay private to the
+package.
 
 ---
 
