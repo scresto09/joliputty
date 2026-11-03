@@ -83,15 +83,15 @@
     <Media Id="1" Cabinet="joliputty.cab" EmbedCab="yes" />
 
     <!-- (Windows 10 version 1809 or later, as the Windows App SDK
-         needs; VersionNT is 1000 for both 10 and 11, and the build
-         number tells them apart) -->
+         needs; by the build number in the registry, since Windows
+         Installer's VersionNT can't be relied on for Windows 10 and 11) -->
     <Property Id="WINDOWSBUILDNUMBER" Secure="yes">
       <RegistrySearch Id="WindowsBuildNumberSearch" Root="HKLM"
                       Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
                       Name="CurrentBuildNumber" Type="raw" />
     </Property>
     <Condition Message="JoliPuTTY needs Windows 10 version 1809 or later (Windows 11 is recommended).">
-      <![CDATA[Installed OR (VersionNT >= 1000 AND WINDOWSBUILDNUMBER >= 17763)]]>
+      <![CDATA[Installed OR WINDOWSBUILDNUMBER >= 17763]]>
     </Condition>
 
     <Directory Id="TARGETDIR" Name="SourceDir">
